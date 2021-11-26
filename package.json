@@ -1,0 +1,31 @@
+{
+  "name": "thumder-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "tsc -w --project tsconfig.json",
+    "test": "jest"
+  },
+  "keywords": [
+    "THUMDER",
+    "Server"
+  ],
+  "author": "nonodev96",
+  "license": "MIT",
+  "dependencies": {
+    "@types/ws": "^8.2.0",
+    "http": "0.0.1-security",
+    "typescript": "^4.5.2",
+    "ws": "^8.3.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^27.0.3",
+    "@typescript-eslint/eslint-plugin": "^5.4.0",
+    "@typescript-eslint/parser": "^5.4.0",
+    "eslint": "^8.3.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.25.3",
+    "jest": "^27.3.1"
+  }
+}
