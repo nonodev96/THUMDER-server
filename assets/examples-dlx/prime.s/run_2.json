@@ -1,0 +1,43 @@
+{
+  "step": 2,
+  "line": 25,
+  "instruction": "addi r1, r0, 0x2",
+  "IF": 1,
+  "IF_stall": 0,
+  "ID": 1,
+  "ID_stall": 0,
+  "intEX": 1,
+  "intEX_stall": 0,
+  "MEM": 1,
+  "MEM_stall": 0,
+  "WB": 1,
+  "WB_stall": 0,
+  "pipeline": {
+    "IF": "0x00000104",
+    "ID": "0x00000100",
+    "intEX": "",
+    "faddEX": [],
+    "fmultEX": [],
+    "fdivEX": [],
+    "MEM": "",
+    "WB": ""
+  },
+  "registers": [
+    {
+      "typeRegister": "Control",
+      "register": "PC",
+      "hexadecimalValue": "0x00000108"
+    },
+    {
+      "typeRegister": "Control",
+      "register": "IMAR",
+      "hexadecimalValue": "0x00000104"
+    },
+    {
+      "typeRegister": "Control",
+      "register": "IR",
+      "hexadecimalValue": "0x20020002"
+    }
+  ],
+  "memory": []
+}
