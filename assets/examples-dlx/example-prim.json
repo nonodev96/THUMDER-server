@@ -1,0 +1,206 @@
+{
+  "id": "",
+  "filename": "prim.s",
+  "date": "2021-08-28T10:25:00.000Z",
+  "canSimulate": true,
+  "lines": 68,
+  "code": [
+    {
+      "address": "0x00000100",
+      "text": "$TEXT",
+      "instruction": "ADDI R1, R0, 0x0",
+      "code": "0x20010000"
+    },
+    {
+      "address": "0x00000104",
+      "text": "MAIN+0x4",
+      "instruction": "ADDI R2, R0, 0x2",
+      "code": "0x20020002"
+    },
+    {
+      "address": "0x00000108",
+      "text": "MAIN+0x8",
+      "instruction": "ADDI R16, R0, 0x10",
+      "code": "0x20100010"
+    },
+    {
+      "address": "0x0000010C",
+      "text": "MAIN+0xC",
+      "instruction": "ADDI R18, R0, 0x8",
+      "code": "0x20120008"
+    },
+    {
+      "address": "0x00000110",
+      "text": "NEXTVALUE",
+      "instruction": "ADDI R3, R0, 0x0",
+      "code": "0x20030000"
+    },
+    {
+      "address": "0x00000114",
+      "text": "LOOP",
+      "instruction": "SEQ R4, R1, R3",
+      "code": "0x00232028"
+    },
+    {
+      "address": "0x00000118",
+      "text": "LOOP+0x4",
+      "instruction": "BNEZ R4, ISPRIM",
+      "code": "0x14800024"
+    },
+    {
+      "address": "0x0000011C",
+      "text": "LOOP+0x8",
+      "instruction": "LW R5, TABLE(R3)",
+      "code": "0x8C651004"
+    },
+    {
+      "address": "0x00000120",
+      "text": "LOOP+0xC",
+      "instruction": "DIVU R6, R2, R5",
+      "code": "0x0045301B"
+    },
+    {
+      "address": "0x00000124",
+      "text": "LOOP+0x10",
+      "instruction": "MULTU R7, R6, R5",
+      "code": "0x00C53819"
+    },
+    {
+      "address": "0x00000128",
+      "text": "LOOP+0x14",
+      "instruction": "SUBU R8, R2, R7",
+      "code": "0x00474023"
+    },
+    {
+      "address": "0x0000012C",
+      "text": "LOOP+0x18",
+      "code": "0x11000028",
+      "instruction": "BEQZ R8, ISNOPRIM"
+    },
+    {
+      "address": "0x00000130",
+      "text": "LOOP+0x1C",
+      "code": "0x20630004",
+      "instruction": "ADDI R3, R3, 0x4"
+    },
+    {
+      "address": "0x00000134",
+      "text": "LOOP+0x20",
+      "code": "0x0212A01B",
+      "instruction": "DIVU R20, R16, R18"
+    },
+    {
+      "address": "0x00000138",
+      "text": "LOOP+0x24",
+      "code": "0x0212B01B",
+      "instruction": "DIVU R22, R16, R18"
+    },
+    {
+      "address": "0x0000013C",
+      "text": "LOOP+0x28",
+      "code": "0x0BFFFFD4",
+      "instruction": "J LOOP"
+    },
+    {
+      "address": "0x00000140",
+      "text": "ISPRIM",
+      "code": "OxAC221004",
+      "instruction": "SW TABLE(R1), R2"
+    },
+    {
+      "address": "0x00000144",
+      "text": "ISPRIM+0x4",
+      "code": "0x20210004",
+      "instruction": "ADDI R1, R1, 0x4"
+    },
+    {
+      "address": "0x00000148",
+      "text": "ISPRIM+0x8",
+      "code": "0x8C091000",
+      "instruction": "SW R9, $DATA(R0)"
+    },
+    {
+      "address": "0x0000014C",
+      "text": "ISPRIM+0xC",
+      "code": "0x00205082",
+      "instruction": "SRLI R10, R1, 0x2"
+    },
+    {
+      "address": "0x00000150",
+      "text": "0x00000150",
+      "code": "0x0149582D",
+      "instruction": "SGE R11, R10, R9"
+    },
+    {
+      "address": "0x00000154",
+      "text": "0x00000154",
+      "code": "0x15600008",
+      "instruction": "BNEZ R11, FINISH"
+    },
+    {
+      "address": "0x00000158",
+      "text": "ISNOPRIM",
+      "code": "0x20420001",
+      "instruction": "ADDI R2, R2, 0x1"
+    },
+    {
+      "address": "0x0000015C",
+      "text": "0x0000015C",
+      "code": "0x0BFFFFB0",
+      "instruction": "J NEXTVALUE"
+    },
+    {
+      "address": "0x00000160",
+      "text": "FINISH",
+      "code": "0x44000000",
+      "instruction": "TRAP 0x0"
+    }
+  ],
+  "runner": [
+    {
+      "step": 0,
+      "line": 0,
+      "isNewInstruction": false,
+      "pipeline": {
+        "IF": {
+          "address": "",
+          "addressRow": 0,
+          "draw": false
+        },
+        "ID": {
+          "address": "",
+          "addressRow": 0,
+          "draw": false
+        },
+        "intEX": {
+          "address": "",
+          "addressRow": 0,
+          "draw": false
+        },
+        "MEM": {
+          "address": "",
+          "addressRow": 0,
+          "draw": false
+        },
+        "WB": {
+          "address": "",
+          "addressRow": 0,
+          "draw": false
+        },
+        "faddEX": [],
+        "fmultEX": [],
+        "fdivEX": [],
+        "arrows": []
+      },
+      "registers": [
+        {
+          "typeRegister": "Control",
+          "register": "PC",
+          "hexadecimalValue": "0x00000100"
+        }
+      ],
+      "memory": [],
+      "statistics": {}
+    }
+  ]
+}

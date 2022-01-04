@@ -1,61 +1,90 @@
+export type TypeAddress = string;
+export type TypeTagLabel = string;
+
 export type File = {
   content: string;
 };
+
 export type TypeRegisterControl =
-  | 'PC'
-  | 'IMAR'
-  | 'IR'
-  | 'A'
-  | 'AHI'
-  | 'B'
-  | 'BHI'
-  | 'BTA'
-  | 'ALU'
-  | 'ALUHI'
-  | 'FPSR'
-  | 'DMAR'
-  | 'SDR'
-  | 'SDRHI'
-  | 'LDR'
-  | 'LDRHI';
+  | "PC"
+  | "IMAR"
+  | "IR"
+  | "A"
+  | "AHI"
+  | "B"
+  | "BHI"
+  | "BTA"
+  | "ALU"
+  | "ALUHI"
+  | "FPSR"
+  | "DMAR"
+  | "SDR"
+  | "SDRHI"
+  | "LDR"
+  | "LDRHI";
 
 export type TypeStage =
-  | ''
-  | 'IF'
-  | 'ID'
-  | 'intEX'
-  | 'MEM'
-  | 'WB'
-  | 'trap'
-  | 'other'
-  | 'faddEX_0'
-  | 'faddEX_1'
-  | 'faddEX_2'
-  | 'faddEX_3'
-  | 'faddEX_4'
-  | 'faddEX_5'
-  | 'faddEX_6'
-  | 'faddEX_7'
-  | 'fdivEX_0'
-  | 'fdivEX_1'
-  | 'fdivEX_2'
-  | 'fdivEX_3'
-  | 'fdivEX_4'
-  | 'fdivEX_5'
-  | 'fdivEX_6'
-  | 'fdivEX_7'
-  | 'fmultEX_0'
-  | 'fmultEX_1'
-  | 'fmultEX_2'
-  | 'fmultEX_3'
-  | 'fmultEX_4'
-  | 'fmultEX_5'
-  | 'fmultEX_6'
-  | 'fmultEX_7';
+  | ""
+  | "IF"
+  | "ID"
+  | "intEX"
+  | "MEM"
+  | "WB"
+  | "trap"
+  | "other"
+  | "faddEX_0"
+  | "faddEX_1"
+  | "faddEX_2"
+  | "faddEX_3"
+  | "faddEX_4"
+  | "faddEX_5"
+  | "faddEX_6"
+  | "faddEX_7"
+  | "fdivEX_0"
+  | "fdivEX_1"
+  | "fdivEX_2"
+  | "fdivEX_3"
+  | "fdivEX_4"
+  | "fdivEX_5"
+  | "fdivEX_6"
+  | "fdivEX_7"
+  | "fmultEX_0"
+  | "fmultEX_1"
+  | "fmultEX_2"
+  | "fmultEX_3"
+  | "fmultEX_4"
+  | "fmultEX_5"
+  | "fmultEX_6"
+  | "fmultEX_7";
 
-export type TypeData = 'Byte' | 'HalfWord' | 'Word' | 'Float' | 'Double' | 'ASCII';
+export type TypeData = "Byte" | "HalfWord" | "Word" | "Float" | "Double" | "ASCII";
+export type TypeDirective = "GLOBAL" | "TEXT" | "SPACE" | "DATA" | "ALIGN" | "ASCII" | "ASCIIZ" | "BYTE" | "FLOAT" | "DOUBLE" | "WORD";
+export type TypeRegister = "Control" | "Integer" | "Float" | "Double";
 
-export type TypeRegister = 'Control' | 'Integer' | 'Float' | 'Double';
+export type TypeAddressLabel = {
+  addressTagLabel: TypeAddress;
+  label: string;
+}
+
+export type TypeAddressDirectiveLabel = {
+  address: TypeAddress;
+  directive: TypeDirective;
+  label?: string;
+}
+
+export type TypeAddressDirectiveLabelData = {
+  directive: TypeDirective;
+  address?: TypeAddress;
+  label?: string;
+  data?: number[] | string[];
+}
+
+export type TypeAddressDirectiveNameData = {
+  // address: TypeAddress;
+  // name: string;
+  directive: TypeDirective;
+  data: string[];
+}
 
 export type uint8 =
   | 0
@@ -319,6 +348,19 @@ export type TypeMemoryIndexValue = {
   value: uint8;
 };
 
+export type TypeAllMemoryAddressBinary = {
+  address: string;
+  index: number;
+  binary32: string;
+  byte_0: number;
+  byte_1: number;
+  byte_2: number;
+  byte_3: number;
+  halfword_0: number;
+  halfword_1: number;
+  word: number;
+}
+
 export type TypeAllMemory = TypeMemoryIndexValue[];
 
 export type TypeAllRegisters = {
@@ -348,6 +390,51 @@ export type TypeTableCode = TypeCode & {
   index?: number;
 };
 
+export type TypeDataStatistics = {
+  TOTAL: {
+    CYCLES_EXECUTED: { cycles: number };
+    ID_EXECUTED: { instructions: number };
+    INSTRUCTIONS_IN_PIPELINE: { instructions_in_pipeline: number };
+  };
+  HARDWARE: {
+    MEMORY_SIZE: { size: number };
+    FADD_EX_STAGES: { num: number; cycles: number };
+    FMULT_EX_STAGES: { num: number; cycles: number };
+    FDIV_EX_STAGES: { num: number; cycles: number };
+    FORWARDING: { enabled: boolean };
+  };
+  STALLS: {
+    RAW_STALLS: { num: number; per: number };
+    LD_STALLS: { num: number; per: number };
+    BRANCH_STALLS: { num: number; per: number };
+    FLOATING_POINT_STALLS: { num: number; per: number };
+    WAW_STALLS: { num: number; per: number };
+    STRUCTURAL_STALLS: { num: number; per: number };
+    CONTROL_STALLS: { num: number; per: number };
+    TRAP_STALLS: { num: number; per: number };
+    TOTAL: { num: number; per: number };
+  };
+  CONDITIONAL: {
+    TOTAL: { num: number; per: number };
+    TAKEN: { num: number; per: number };
+    NOT_TAKEN: { num: number; per: number };
+  };
+  LOAD_STORE: {
+    TOTAL: { num: number; per: number };
+    LOADS: { num: number; per: number };
+    STORES: { num: number; per: number };
+  };
+  FLOATING: {
+    TOTAL: { num: number; per: number };
+    ADDITIONS: { num: number; per: number };
+    MULTIPLICATIONS: { num: number; per: number };
+    DIVISIONS: { num: number; per: number };
+  };
+  TRAPS: {
+    TOTAL: { num: number; per: number };
+  };
+};
+
 export type TypeRegisterToUpdate = {
   typeRegister: TypeRegister;
   register: string; // TypeRegisterControl & number [0-31]
@@ -360,40 +447,49 @@ export type TypeMemoryToUpdate = {
   value: string;
 };
 
+export type TypeArrowCycle = {
+  fromAddressRow: number;
+  fromStep: number;
+  toAddressRow: number;
+  toStep: number;
+};
+
+export type TypeStall = "Aborted" | "R-Stall" | "T-Stall" | "W-Stall" | "S-Stall" | "Stall";
+
+export type TypeCycleCell = {
+  address: string;
+  addressRow: number;
+  draw: boolean | TypeStall;
+};
+
+export type TypeCycleCellUnit = TypeCycleCell & {
+  unit?: number
+};
+
 export type TypePipeline = {
-  // Address
-  IF: string;
-  ID: string;
-  intEX: string;
-  faddEX: { unit: number; address: string }[];
-  fmultEX: { unit: number; address: string }[];
-  fdivEX: { unit: number; address: string }[];
-  MEM: string;
-  WB: string;
+  IF: TypeCycleCell;
+  ID: TypeCycleCell;
+  intEX: TypeCycleCell;
+  MEM: TypeCycleCell;
+  WB: TypeCycleCell;
+  faddEX: TypeCycleCellUnit[];
+  fmultEX: TypeCycleCellUnit[];
+  fdivEX: TypeCycleCellUnit[];
+  arrows: TypeArrowCycle[];
 };
 
 export type TypeSimulationStep = {
+  isComplete?: boolean;
   step: number;
   line: number;
-  instruction: string;
-  codeInstruction: string;
-  isComplete?: boolean;
+  isNewInstruction: boolean;
   // stage: TypeStage;
 
-  IF: number;
-  IF_stall: number;
-  ID: number;
-  ID_stall: number;
-  intEX: number;
-  intEX_stall: number;
-  MEM: number;
-  MEM_stall: number;
-  WB: number;
-  WB_stall: number;
-
   pipeline: TypePipeline;
+
   registers: TypeRegisterToUpdate[];
   memory: TypeMemoryToUpdate[];
+  statistics: Partial<TypeDataStatistics>;
 };
 
 export type TypeFloatingPointConfiguration = {
@@ -425,8 +521,8 @@ export type TypeSimulationInitResponse = {
   filename: string;
   id: string;
   date: string;
-  steps: number;
   lines: number;
+  canSimulate: boolean;
 
   code: TypeCode[];
   runner: TypeSimulationStep[];

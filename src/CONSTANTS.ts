@@ -1,4 +1,4 @@
-import { TypeRegisterControl } from "./Types";
+import { TypeRegisterControl, TypeSimulationStep } from "./Types";
 
 export const RegexRegisterInteger =
   /\b(R0|R1|R2|R3|R4|R5|R6|R7|R8|R9|R10|R11|R12|R13|R14|R15|R16|R17|R18|R19|R20|R21|R22|R23|R24|R25|R26|R27|R28|R29|R30|R31)\b/i;
@@ -27,3 +27,48 @@ export const REGISTERS_OF_CONTROL: TypeRegisterControl[] = [
   "LDR",
   "LDRHI",
 ];
+export const REGEX_TYPE_DIRECTIVE = (/(.(GLOBAL|TEXT|SPACE|DATA|ALIGN|ASCII|ASCIIZ|BYTE|FLOAT|DOUBLE|WORD))/i);
+export const REGEX_TYPE_DIRECTIVE_VECTOR = (/(.(GLOBAL|TEXT|SPACE|DATA|ALIGN|ASCII|ASCIIZ|BYTE|FLOAT|DOUBLE|WORD)|\d+)/igm);
+export const REGEX_TAG_LABEL = /\w+:/im;
+export const REGEX_GLOBAL_DIRECTIVE = /(.GLOBAL\s*)(\w+)/im;
+
+export const DEFAULT_SIMULATION_STEP_VOID: TypeSimulationStep = {
+  isNewInstruction: false,
+  step:             0,
+  line:             0,
+  pipeline:         {
+    IF:        {
+      address:    "",
+      addressRow: 0,
+      draw:       false,
+    },
+    ID:        {
+      address:    "",
+      addressRow: 0,
+      draw:       false,
+    },
+    intEX:     {
+      address:    "",
+      addressRow: 0,
+      draw:       false,
+    },
+    MEM:       {
+      address:    "",
+      addressRow: 0,
+      draw:       false,
+    },
+    WB:        {
+      address:    "",
+      addressRow: 0,
+      draw:       false,
+    },
+    "arrows":  [],
+    "faddEX":  [],
+    "fdivEX":  [],
+    "fmultEX": [],
+  },
+  memory:           [],
+  registers:        [],
+  statistics:       {},
+
+};

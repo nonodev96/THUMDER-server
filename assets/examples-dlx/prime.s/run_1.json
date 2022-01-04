@@ -1,42 +1,53 @@
 {
   "step": 1,
-  "line": 24,
-  "instruction": "addi r1, r0, 0x0",
-  "IF": 1,
-  "IF_stall": 0,
-  "ID": 1,
-  "ID_stall": 0,
-  "intEX": 1,
-  "intEX_stall": 0,
-  "MEM": 1,
-  "MEM_stall": 0,
-  "WB": 1,
-  "WB_stall": 0,
+  "line": 25,
+  "isNewInstruction": true,
   "pipeline": {
-    "IF": "0x00000100",
-    "ID": "",
-    "intEX": "",
+    "IF": {
+      "address": "0x00000104",
+      "addressRow": 1,
+      "draw": true
+    },
+    "ID": {
+      "address": "0x00000100",
+      "addressRow": 0,
+      "draw": true
+    },
+    "intEX": {
+      "address": "",
+      "addressRow": 0,
+      "draw": false
+    },
+    "MEM": {
+      "address": "",
+      "addressRow": 0,
+      "draw": false
+    },
+    "WB": {
+      "address": "",
+      "addressRow": 0,
+      "draw": false
+    },
     "faddEX": [],
     "fmultEX": [],
     "fdivEX": [],
-    "MEM": "",
-    "WB": ""
+    "arrows": []
   },
   "registers": [
     {
       "typeRegister": "Control",
       "register": "PC",
-      "hexadecimalValue": "0x00000104"
+      "hexadecimalValue": "0x00000108"
     },
     {
       "typeRegister": "Control",
       "register": "IMAR",
-      "hexadecimalValue": "0x00000100"
+      "hexadecimalValue": "0x00000104"
     },
     {
       "typeRegister": "Control",
       "register": "IR",
-      "hexadecimalValue": "0x20010000"
+      "hexadecimalValue": "0x20020002"
     }
   ],
   "memory": []

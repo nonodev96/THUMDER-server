@@ -1,0 +1,39 @@
+{
+  "step": 10,
+  "line": 36,
+  "isComplete": true,
+  "isNewInstruction": true,
+  "pipeline": {
+    "IF": {
+      "address": "0x00000144",
+      "addressRow": 8,
+      "draw": true
+    },
+    "ID": {
+      "address": "0x00000140",
+      "addressRow": 7,
+      "draw": true
+    },
+    "intEX": {
+      "address": "",
+      "addressRow": 0,
+      "draw": false
+    },
+    "MEM": {
+      "address": "0x00000118",
+      "addressRow": 6,
+      "draw": true
+    },
+    "WB": {
+      "address": "",
+      "addressRow": 0,
+      "draw": false
+    },
+    "faddEX": [],
+    "fmultEX": [],
+    "fdivEX": [],
+    "arrows": []
+  },
+  "registers": [],
+  "memory": []
+}

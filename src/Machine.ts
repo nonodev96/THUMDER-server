@@ -1,10 +1,12 @@
-import * as fs from 'fs';
-import path from 'path';
-import InterpreterDLX from './InterpreterDLX';
+import * as fs from "fs";
+import path from "path";
+import InterpreterDLX from "./InterpreterDLX";
 import {
+  TypeAddress,
   TypeAllMemory,
   TypeAllRegisters,
-  TypeCode,
+  TypeCode, TypeCycleCell,
+  TypeDataStatistics,
   TypeFloatingPointConfiguration,
   TypeMemoryToUpdate,
   TypeRegister,
@@ -12,13 +14,20 @@ import {
   TypeRegisterToUpdate,
   TypeSimulationInitRequest,
   TypeSimulationInitResponse,
-  TypeSimulationStep,
-} from './Types';
-import ManagerMemory from './DLX/ManagerMemory';
-import ManagerRegisters from './DLX/ManagerRegisters';
-import { Utils } from './Utils';
-import { Float32, Int32 } from './DLX/TypeData';
-import { RegexRegisterControl, RegexRegisterDouble, RegexRegisterFloat, RegexRegisterInteger, REGISTERS_OF_CONTROL } from './CONSTANTS';
+  TypeSimulationStep, TypeTagLabel,
+} from "./Types";
+import ManagerMemory from "./DLX/ManagerMemory";
+import ManagerRegisters from "./DLX/ManagerRegisters";
+import { Utils } from "./Utils";
+import { Float32, Int32 } from "./DLX/TypeData";
+import {
+  DEFAULT_SIMULATION_STEP_VOID,
+  RegexRegisterControl,
+  RegexRegisterDouble,
+  RegexRegisterFloat,
+  RegexRegisterInteger,
+  REGISTERS_OF_CONTROL
+} from "./CONSTANTS";
 
 export default class Machine {
   private content: string;
@@ -29,19 +38,22 @@ export default class Machine {
 
   private registers: ManagerRegisters;
 
-  public code: Map<string, TypeCode>;
+  public code: Map<TypeAddress, TypeCode>;
+
+  public tags: Map<TypeAddress, TypeTagLabel>;
 
   private privateStep: number;
 
   private privateLine: number;
 
   constructor() {
-    this.content = '';
+    this.content = "";
     this.code = new Map();
+    this.tags = new Map();
     this.privateStep = 0;
     this.privateLine = 0;
     this.configuration = {
-      addition: {
+      addition:       {
         count: 1,
         delay: 1,
       },
@@ -49,56 +61,83 @@ export default class Machine {
         count: 1,
         delay: 1,
       },
-      division: {
+      division:       {
         count: 1,
         delay: 1,
       },
     };
     this.registers = new ManagerRegisters();
-    this.memory = new ManagerMemory(100);
+    this.memory = new ManagerMemory(512);
+  }
+
+  private reset() {
+    this.code.clear();
+    this.tags.clear();
+    this.privateStep = 0;
+    this.privateLine = 0;
+    this.registers.reset();
+    this.memory.reset();
+    this.registers.PC.hexadecimal = "0x00000100";
   }
 
   public setContent(content: string) {
     this.content = content;
   }
 
-  public getMachineCode() {
+  public getMachineCode(content: string) {
     const interpreter = new InterpreterDLX();
-    interpreter.setContent(this.content);
+    interpreter.setContent(content);
     interpreter.analyze();
-    return interpreter.getCode();
+    const code = interpreter.getCode();
+    const tags = interpreter.getTags();
+    return { code, tags };
   }
 
   public SimulationInit(simulationInitRequest: TypeSimulationInitRequest): TypeSimulationInitResponse {
-    const { content, filename, id } = simulationInitRequest;
-    this.setContent(content);
-    const machineCode = this.getMachineCode();
+    const { id, date, filename, content, registers, memory } = simulationInitRequest;
+    this.reset();
+    // const response = fs.readFileSync(path.resolve(__dirname, "../assets/examples-dlx/example-prim.json"), "utf-8");
+    // const simulationInit: TypeSimulationInitResponse = JSON.parse(response) as TypeSimulationInitResponse;
+    const interpreter = new InterpreterDLX();
+    interpreter.setContent(content);
+    interpreter.analyze();
 
-    for (const ins of machineCode) {
-      const { address, code } = ins;
-      const binary32 = Utils.hexadecimalToBinary(code);
-      this.memory.setMemoryWordBinaryByAddress(address, binary32);
-      this.code.set(address, ins);
+    const code: TypeCode[] = interpreter.getCode();
+    const runner: TypeSimulationStep[] = [
+      DEFAULT_SIMULATION_STEP_VOID
+    ];
+
+    runner[0].registers[0] = {
+      "typeRegister":     "Control",
+      "register":         "PC",
+      "hexadecimalValue": "0x00000100"
+    };
+
+    for (const instruction of code) {
+      const binary32 = Utils.hexadecimalToBinary(instruction.code);
+      this.memory.setMemoryWordBinaryByAddress(instruction.address, binary32);
+      this.code.set(instruction.address, instruction);
     }
 
+    this.registers.processResponse(registers);
+    this.memory.processResponse(memory);
+
+
     return {
-      filename: filename,
-      id: id,
-      date: new Date().toLocaleDateString(),
-      steps: 8,
-      lines: 68,
-      code: machineCode,
-      runner: [],
+      id:          id,
+      filename:    filename,
+      date:        new Date(date).toISOString(),
+      canSimulate: true,
+      lines:       content.split("\n").length,
+      code:        code,
+      runner:      runner,
     } as TypeSimulationInitResponse;
   }
 
   public simulationNextStep(): TypeSimulationStep {
-    const response = fs.readFileSync(path.resolve(__dirname, '../assets/examples-dlx/prime.s/run_' + this.privateStep + '.json'), 'utf-8');
+    const response = fs.readFileSync(path.resolve(__dirname, "../assets/examples-dlx/prime.s/run_" + this.privateStep + ".json"), "utf-8");
     const status = JSON.parse(response) as TypeSimulationStep;
-    status.codeInstruction = '0x00000000';
-    if (status.instruction !== '') {
-      status.codeInstruction = Utils.convertMachineInstructionToHexCode_DLX(status.instruction);
-    }
+    status.statistics = this.getAllStatistics();
 
     this.privateStep++;
     return status;
@@ -113,48 +152,48 @@ export default class Machine {
     for (const memory_value of memoryToUpdates) {
       const { typeData, address, value } = memory_value;
       switch (typeData) {
-        case 'Byte': {
+        case "Byte": {
           const binary = Utils.hexadecimalToBinary(value, {
-            maxLength: 8,
-            fillString: '0',
+            maxLength:  8,
+            fillString: "0",
           });
           this.memory.setMemoryByteBinaryByAddress(address, binary);
           break;
         }
-        case 'HalfWord': {
+        case "HalfWord": {
           const binary = Utils.hexadecimalToBinary(value, {
-            maxLength: 16,
-            fillString: '0',
+            maxLength:  16,
+            fillString: "0",
           });
           this.memory.setMemoryHalfWordBinaryByAddress(address, binary);
           break;
         }
-        case 'Word': {
+        case "Word": {
           const binary = Utils.hexadecimalToBinary(value, {
-            maxLength: 32,
-            fillString: '0',
+            maxLength:  32,
+            fillString: "0",
           });
           this.memory.setMemoryWordBinaryByAddress(address, binary);
           break;
         }
-        case 'Float': {
+        case "Float": {
           const binary = Utils.hexadecimalToBinary(value, {
-            maxLength: 32,
-            fillString: '0',
+            maxLength:  32,
+            fillString: "0",
           });
           this.memory.setMemoryFloatBinaryByAddress(address, binary);
           break;
         }
-        case 'Double': {
+        case "Double": {
           const binary = Utils.hexadecimalToBinary(value, {
-            maxLength: 64,
-            fillString: '0',
+            maxLength:  64,
+            fillString: "0",
           });
           this.memory.setMemoryDoubleBinaryByAddress(address, binary);
           break;
         }
         default: {
-          console.log('Default memory', typeData, address, value);
+          console.log("Default memory", typeData, address, value);
           break;
         }
       }
@@ -166,65 +205,65 @@ export default class Machine {
     for (const register_value of registerToUpdates) {
       const { register, typeRegister, hexadecimalValue } = register_value;
       switch (typeRegister) {
-        case 'Control': {
+        case "Control": {
           const binary = Utils.hexadecimalToBinary(register_value.hexadecimalValue);
           this.registers.setControl(register as TypeRegisterControl, binary);
           return [
             {
-              typeRegister: 'Control',
-              register: register,
+              typeRegister:     "Control",
+              register:         register,
               hexadecimalValue: hexadecimalValue,
             },
           ];
         }
-        case 'Integer': {
+        case "Integer": {
           const r: number = Machine.getRegisterNumber(register);
           this.registers.R[r] = new Int32();
           this.registers.R[r].binary = Utils.hexadecimalToBinary(hexadecimalValue);
           return [
             {
-              typeRegister: 'Integer',
-              register: register,
+              typeRegister:     "Integer",
+              register:         register,
               hexadecimalValue: Utils.binaryToHexadecimal(this.registers.R[r].binary),
             },
           ];
         }
-        case 'Float': {
+        case "Float": {
           const f: number = Machine.getRegisterNumber(register);
           this.registers.F[f] = new Float32();
           this.registers.F[f].binary = Utils.hexadecimalToBinary(hexadecimalValue);
           return [
             {
-              typeRegister: 'Float',
-              register: register,
+              typeRegister:     "Float",
+              register:         register,
               hexadecimalValue: Utils.binaryToHexadecimal(this.registers.F[f].binary),
             },
           ];
         }
-        case 'Double': {
+        case "Double": {
           const d: number = Machine.getRegisterNumber(register);
           const binary = Utils.hexadecimalToBinary(hexadecimalValue, {
-            maxLength: 64,
-            fillString: '0',
+            maxLength:  64,
+            fillString: "0",
           });
           this.registers.F[d] = new Float32();
           this.registers.F[d].binary = binary.substr(0, 32);
           this.registers.F[d + 1].binary = binary.substr(32, 32);
           return [
             {
-              typeRegister: 'Double',
-              register: 'F' + d,
+              typeRegister:     "Double",
+              register:         "F" + d,
               hexadecimalValue: Utils.binaryToHexadecimal(this.registers.F[d].binary),
             },
             {
-              typeRegister: 'Double',
-              register: 'F' + (d + 1),
+              typeRegister:     "Double",
+              register:         "F" + (d + 1),
               hexadecimalValue: Utils.binaryToHexadecimal(this.registers.F[d + 1].binary),
             },
           ];
         }
         default: {
-          console.log('Default register', typeRegister, register, hexadecimalValue);
+          console.log("Default register", typeRegister, register, hexadecimalValue);
           break;
         }
       }
@@ -238,25 +277,25 @@ export default class Machine {
       const value = this.registers.getRegister(registerOfControl);
       controlArray.push({
         register: registerOfControl,
-        value: Utils.binaryToHexadecimal(value.binary),
+        value:    Utils.binaryToHexadecimal(value.binary),
       });
     }
     const integerArray = this.registers.R.map((v, index) => {
       return {
         register: index,
-        value: Utils.binaryToHexadecimal(v.binary),
+        value:    Utils.binaryToHexadecimal(v.binary),
       };
     });
     const floatArray = this.registers.F.map((v, index) => {
       return {
         register: index,
-        value: Utils.binaryToHexadecimal(v.binary),
+        value:    Utils.binaryToHexadecimal(v.binary),
       };
     });
     return {
       Control: controlArray,
       Integer: integerArray,
-      Float: floatArray,
+      Float:   floatArray,
     };
   }
 
@@ -264,23 +303,139 @@ export default class Machine {
     return this.memory.getAllMemory();
   }
 
+  public getAllStatistics(): TypeDataStatistics {
+    return {
+      TOTAL:       {
+        CYCLES_EXECUTED:          { cycles: this.privateStep },
+        ID_EXECUTED:              { instructions: 0 },
+        INSTRUCTIONS_IN_PIPELINE: { instructions_in_pipeline: 0 },
+      },
+      CONDITIONAL: {
+        NOT_TAKEN: {
+          num: 0,
+          per: 0,
+        },
+        TAKEN:     {
+          num: 0,
+          per: 0,
+        },
+        TOTAL:     {
+          num: 0,
+          per: 0,
+        },
+      },
+      FLOATING:    {
+        ADDITIONS:       {
+          num: 0,
+          per: 0,
+        },
+        DIVISIONS:       {
+          num: 0,
+          per: 0,
+        },
+        MULTIPLICATIONS: {
+          num: 0,
+          per: 0,
+        },
+        TOTAL:           {
+          num: 0,
+          per: 0,
+        },
+      },
+      HARDWARE:    {
+        FADD_EX_STAGES:  {
+          cycles: 0,
+          num:    0,
+        },
+        FDIV_EX_STAGES:  {
+          cycles: 0,
+          num:    0,
+        },
+        FMULT_EX_STAGES: {
+          cycles: 0,
+          num:    0,
+        },
+        FORWARDING:      { enabled: false },
+        MEMORY_SIZE:     { size: 0 },
+      },
+      LOAD_STORE:  {
+        LOADS:  {
+          num: 0,
+          per: 0,
+        },
+        STORES: {
+          num: 0,
+          per: 0,
+        },
+        TOTAL:  {
+          num: 0,
+          per: 0,
+        },
+      },
+      STALLS:      {
+        BRANCH_STALLS:         {
+          num: 0,
+          per: 0,
+        },
+        CONTROL_STALLS:        {
+          num: 0,
+          per: 0,
+        },
+        FLOATING_POINT_STALLS: {
+          num: 0,
+          per: 0,
+        },
+        LD_STALLS:             {
+          num: 0,
+          per: 0,
+        },
+        RAW_STALLS:            {
+          num: 0,
+          per: 0,
+        },
+        STRUCTURAL_STALLS:     {
+          num: 0,
+          per: 0,
+        },
+        TOTAL:                 {
+          num: 0,
+          per: 0,
+        },
+        TRAP_STALLS:           {
+          num: 0,
+          per: 0,
+        },
+        WAW_STALLS:            {
+          num: 0,
+          per: 0,
+        },
+      },
+      TRAPS:       {
+        TOTAL: {
+          num: 0,
+          per: 0,
+        },
+      },
+    };
+  }
+
   private static getRegisterNumber(str: string): number {
-    return parseInt(str.replace(/\D/g, ''), 10);
+    return parseInt(str.replace(/\D/g, ""), 10);
   }
 
   private static getTypeRegister(register: string): TypeRegister {
     if (RegexRegisterControl.test(register)) {
-      return 'Control';
+      return "Control";
     }
     if (RegexRegisterInteger.test(register)) {
-      return 'Integer';
+      return "Integer";
     }
     if (RegexRegisterFloat.test(register)) {
-      return 'Float';
+      return "Float";
     }
     if (RegexRegisterDouble.test(register)) {
-      return 'Double';
+      return "Double";
     }
-    return 'Control';
+    return "Control";
   }
 }

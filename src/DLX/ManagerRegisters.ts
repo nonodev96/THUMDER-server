@@ -1,5 +1,5 @@
-import { Float32, Int32 } from './TypeData';
-import { TypeRegisterControl } from '../Types';
+import { Float32, Int32 } from "./TypeData";
+import { TypeRegisterControl, TypeRegisterToUpdate } from "../Types";
 
 export default class ManagerRegisters {
   PC: Int32;
@@ -59,5 +59,21 @@ export default class ManagerRegisters {
 
   getRegister(registerControl: TypeRegisterControl): Int32 {
     return this[registerControl];
+  }
+
+  reset() {
+    const registerControl = ["PC", "IMAR", "IR", "A", "AHI", "B", "BHI", "BTA", "ALU", "ALUHI", "FPSR", "DMAR", "SDR", "SDRHI", "LDR", "LDRHI"];
+    for (const register of registerControl) {
+      const r = register as TypeRegisterControl;
+      this[r] = new Int32();
+    }
+    for (let i = 0; i < 32; i++) {
+      this.R[i] = new Int32();
+      this.F[i] = new Float32();
+    }
+  }
+
+  processResponse(registers: TypeRegisterToUpdate[]): void {
+
   }
 }

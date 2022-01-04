@@ -10,6 +10,14 @@ export class Int32 {
   set binary(newBinary: string) {
     this._value = parseInt(newBinary, 2);
   }
+
+  get hexadecimal(): string {
+    return this._value.toString(16).padStart(8, "0");
+  }
+
+  set hexadecimal(newHexadecimal: string) {
+    this._value = parseInt(newHexadecimal, 16);
+  }
 }
 
 export class Float32 {

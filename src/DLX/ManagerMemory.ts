@@ -1,6 +1,6 @@
-import { Utils } from '../Utils';
-import { Int32 } from './TypeData';
-import { TypeAllMemory, uint8 } from '../Types';
+import { Utils } from "../Utils";
+import { Int32 } from "./TypeData";
+import { TypeAllMemory, TypeAllMemoryAddressBinary, TypeMemoryToUpdate, uint8 } from "../Types";
 
 export default class ManagerMemory {
   // Bytes
@@ -39,11 +39,11 @@ export default class ManagerMemory {
 
   public getMemoryWordBinaryByIndex(index: number): string {
     return (
-      '' +
-      this._memoryInt8Array[index].toString(2).padStart(8, '0') +
-      this._memoryInt8Array[index + 1].toString(2).padStart(8, '0') +
-      this._memoryInt8Array[index + 2].toString(2).padStart(8, '0') +
-      this._memoryInt8Array[index + 3].toString(2).padStart(8, '0')
+      "" +
+      this._memoryInt8Array[index].toString(2).padStart(8, "0") +
+      this._memoryInt8Array[index + 1].toString(2).padStart(8, "0") +
+      this._memoryInt8Array[index + 2].toString(2).padStart(8, "0") +
+      this._memoryInt8Array[index + 3].toString(2).padStart(8, "0")
     );
   }
 
@@ -75,7 +75,7 @@ export default class ManagerMemory {
 
   // BYTE - GET
   public getMemoryByteBinaryByIndex(index: number): string {
-    return this._memoryInt8Array[index].toString(2).padStart(8, '0');
+    return this._memoryInt8Array[index].toString(2).padStart(8, "0");
   }
 
   // BYTE - SET
@@ -93,7 +93,7 @@ export default class ManagerMemory {
 
   // HALF WORD - GET
   public getMemoryHalfWordBinaryByIndex(index: number): string {
-    return '' + this._memoryInt8Array[index].toString(2).padStart(8, '0') + this._memoryInt8Array[index + 1].toString(2).padStart(8, '0');
+    return "" + this._memoryInt8Array[index].toString(2).padStart(8, "0") + this._memoryInt8Array[index + 1].toString(2).padStart(8, "0");
   }
 
   // HALF WORD - SET
@@ -128,6 +128,40 @@ export default class ManagerMemory {
       const p0 = binary_08_16_32_64.substr(pos, 8);
       this._memoryInt8Array[index + (pos % 8)] = parseInt(p0, 2);
     }
+  }
+
+  public getAllMemoryAddressBinary(): TypeAllMemoryAddressBinary[] {
+    const elements = Array.from(this._memoryInt8Array)
+      .map((value, index) => ({ index, value }))
+      .filter((v) => v.value !== 0)
+      .sort((a, b) => a.index - b.index);
+    const resultElements: TypeAllMemoryAddressBinary[] = [];
+    for (let index = 0; index < this._memorySizeBytes; index += 4) {
+      const e0 = elements.filter((v) => v.index === index);
+      const e1 = elements.filter((v) => v.index === index + 1);
+      const e2 = elements.filter((v) => v.index === index + 2);
+      const e3 = elements.filter((v) => v.index === index + 3);
+      if (e0[0] !== undefined || e1[0] !== undefined || e2[0] !== undefined || e3[0] !== undefined) {
+        const binary32 = "" +
+          (e0[0]?.value ?? 0).toString(2).padStart(8, "0") +
+          (e1[0]?.value ?? 0).toString(2).padStart(8, "0") +
+          (e2[0]?.value ?? 0).toString(2).padStart(8, "0") +
+          (e3[0]?.value ?? 0).toString(2).padStart(8, "0");
+        resultElements.push({
+          address:    index.toString(16).padStart(8, "0").toUpperCase(),
+          index:      index,
+          binary32:   binary32,
+          byte_0:     parseInt(binary32.substr(0, 8), 2),
+          byte_1:     parseInt(binary32.substr(8, 8), 2),
+          byte_2:     parseInt(binary32.substr(16, 8), 2),
+          byte_3:     parseInt(binary32.substr(24, 8), 2),
+          halfword_0: parseInt(binary32.substr(0, 16), 2),
+          halfword_1: parseInt(binary32.substr(16, 8), 2),
+          word:       parseInt(binary32.substr(0, 32), 2),
+        });
+      }
+    }
+    return resultElements;
   }
 
   public getAllMemory(): TypeAllMemory {
@@ -173,5 +207,23 @@ export default class ManagerMemory {
       list.push(index);
     }
     return list;
+  }
+
+  reset() {
+    this._memoryInt8Array = new Uint8Array(this._memorySizeBytes + 8);
+  }
+
+  processResponse(memory: TypeMemoryToUpdate[]): void {
+    for (const memoryToUpdate of memory) {
+      switch (memoryToUpdate.typeData) {
+        case "Byte": {
+          this.setMemoryByteBinaryByAddress(memoryToUpdate.address, memoryToUpdate.value);
+          break;
+        }
+        default: {
+          break;
+        }
+      }
+    }
   }
 }

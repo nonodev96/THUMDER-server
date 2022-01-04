@@ -1,4 +1,15 @@
+import fs from "fs";
+import {
+  TypeAddress,
+  TypeAddressDirectiveLabel,
+  TypeAddressDirectiveNameData, TypeAddressLabel,
+  TypeDirective,
+  TypeTagLabel
+} from "./Types";
+import { REGEX_TYPE_DIRECTIVE, REGEX_TYPE_DIRECTIVE_VECTOR } from "./CONSTANTS";
+
 /* @formatter:off */
+// (bit0-2)(bit3-5)
 const OPCODES_TYPE_I_J = [
   // { bits: '000000', name: '(RR ALU)'  },
   { opcode: '001000', name: 'ADDI' },
@@ -39,19 +50,22 @@ const OPCODES_TYPE_I_J = [
 
   { opcode: '000110', name: 'BFPT' },
   { opcode: '001110', name: 'XORI' },
-  { opcode: '010110', name: 'SRLI' },
+  // { opcode: '010110', name: 'SRLI' },
   { opcode: '100110', name: 'LF' },
   { opcode: '101110', name: 'SF' },
 
   { opcode: '000111', name: 'BFPF' },
   { opcode: '001111', name: 'LHI' },
-  { opcode: '010111', name: 'SRAI' },
+  // { opcode: '010111', name: 'SRAI' },
   { opcode: '100111', name: 'LD' },
   { opcode: '101111', name: 'SD' },
 ];
 // DLX R-R ALU instructions (opcode = 0):
 // only the least-significant 6 bits in the function field are used.
+// (bit26-28)(bit29-31)
 const OPCODES_TYPE_R_OPCODE_0 = [
+  { operation: '000010', name: 'SRLI' },
+  { operation: '000011', name: 'SRAI' },
   { operation: "000100", name: "SLL" },
   { operation: "000110", name: "SRL" },
   { operation: "000111", name: "SRA" },
@@ -119,6 +133,7 @@ const OPCODES_TYPE_R_OPCODE_1 = [
 /* @formatter:on */
 
 export namespace Utils {
+
   export function dev(): void {
     console.log("dev");
   }
@@ -129,64 +144,113 @@ export namespace Utils {
 
   export function binaryToHexadecimal(binary: string, args = {
     maxLength:  8,
-    fillString: '0'
+    fillString: "0"
   }): string {
     return parseInt(binary, 2).toString(16).toUpperCase().padStart(args.maxLength, args.fillString);
   }
 
   export function hexadecimalToBinary(hexadecimal: string, args = {
     maxLength:  32,
-    fillString: '0'
+    fillString: "0"
   }): string {
     const decimal = hexadecimalToDecimal(hexadecimal);
     return (decimal).toString(2).padStart(args.maxLength, args.fillString);
   }
 
-  export function getTagFromLine(line: string) {
+
+  export function readFileContents(path: string): string {
+    return fs.readFileSync(path, "utf8");
+  }
+
+  export function getTagLabelFromLine(line: string) {
     return line.replace(":", "");
   }
 
-  export function clearFile(content: string): string[] {
+  export function getLinesDirectivesAndTags(content: string) {
     let lines = content.split("\n");
-    lines = lines.map((v) => v.trim());
-    lines = lines.map((v) => {
-      return v.split("\t").join("    ");
+    lines = lines.map((line) => line.trim());
+    lines = lines.map((line) => {
+      let auxLine = line;
+      const match = auxLine.match(/;.*/);
+      if (match) {
+        auxLine = auxLine.slice(0, match.index);
+      }
+      return auxLine.trim().split("\t").join("    ").trim();
     });
-    lines = lines.filter((v) => v[0] !== ";");
-    lines = lines.filter((v) => v[0] !== ".");
-    lines = lines.filter((v) => v !== "");
+    lines = lines.filter((line) => line !== "");
+    lines = lines.filter((line) => Utils.checkIfLineContainDirectives(line));
     return lines;
   }
 
+  export function getLinesInstructionsAndTags(content: string): string[] {
+    let lines = content.split("\n");
+    lines = lines.map((line) => line.trim());
+    lines = lines.map((line) => {
+      let auxLine = line;
+      const match = auxLine.match(/;.*/);
+      if (match) {
+        auxLine = auxLine.slice(0, match.index);
+      }
+      return auxLine.trim().split("\t").join("    ");
+    });
+    lines = lines.filter((line) => line !== "");
+    lines = lines.filter((line) => !Utils.checkIfLineContainDirectives(line));
+    return lines;
+  }
+
+
   export function typeLineDLX(line: string): "instruction" | "tag" {
-    if (line.includes(":")) {
+    if ((/\w+:/).test(line)) {
       return "tag";
     }
     return "instruction";
+  }
+
+  export function getTypeDataFromDirective(lineDirectivesAndTag: string): TypeAddressDirectiveNameData {
+    if (/\w+:/.test(lineDirectivesAndTag)) {
+      // console.debug("- tag: ", lineDirectivesAndTag);
+    }
+    const match = lineDirectivesAndTag.match(REGEX_TYPE_DIRECTIVE_VECTOR);
+    if (match === null) {
+      throw new Error("Type data directive is not valid");
+    }
+    const typeDirective = match[0].slice(1).toUpperCase() as unknown as TypeDirective;
+    const data = lineDirectivesAndTag.match(/([0-9]+\.?'?[0-9]{0,2})+/igm) as RegExpMatchArray;
+    // const data = match.slice(1);
+    return { directive: typeDirective, data: data };
+  }
+
+  // Directives
+  export function checkIfLineContainDirectives(line: string): boolean {
+    return (REGEX_TYPE_DIRECTIVE).test(line);
   }
 
   export function getRandomInt(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min)) + min;
   }
 
-  export function convertHexCodeToMachineInstruction_DLX(hexCode: string): string {
+  export function convertHexCodeToMachineInstruction_DLX(hexCode: string, tags: Map<TypeAddress, TypeAddressLabel>, h_addressPC: string): string {
     const binary = parseInt(hexCode, 16).toString(2).padStart(32, "0");
     const opcode = binary.substr(0, 6);
     const func_field = binary.substr(21, 11);
     const func_field_6_last_bits = func_field.substr(-6);
 
     const rs1 = parseInt(binary.substr(6, 5), 2);
-    const rs2 = parseInt(binary.substr(6 + 5, 5), 2);
-    const rd0 = parseInt(binary.substr(6 + 5 + 5, 5), 2);
+    const rs2 = parseInt(binary.substr(11, 5), 2);
+    const rd0 = parseInt(binary.substr(16, 5), 2);
 
     const rs1F = parseInt(binary.substr(6, 5), 2);
-    const rs2F = parseInt(binary.substr(6 + 5, 5), 2);
-    const rd0F = parseInt(binary.substr(6 + 5 + 5, 5), 2);
+    const rs2F = parseInt(binary.substr(11, 5), 2);
+    const rd0F = parseInt(binary.substr(16, 5), 2);
 
     const rs1I = parseInt(binary.substr(6, 5), 2);
-    const rd0I = parseInt(binary.substr(6 + 5, 5), 2);
-    const data = parseInt(binary.substr(6 + 5 + 5, 16), 2);
-    const data_26 = parseInt(binary.substr(6, 26), 2);
+    const rd0I = parseInt(binary.substr(11, 5), 2);
+    const d_data_16b = parseInt(binary.substr(16, 16), 2);
+    const d_data_26b = parseInt(binary.substr(6, 26), 2);
+
+    const rX = parseInt(binary.substr(16, 5), 2);
+    const rY = parseInt(binary.substr(6, 5), 2);
+    const rZ = parseInt(binary.substr(21, 5), 2);
 
     if (binary === "".padStart(32, "0")) {
       return "NOP";
@@ -200,9 +264,12 @@ export namespace Utils {
       if (instructionTypeR_opcode_0) {
         const instruction_name = instructionTypeR_opcode_0.name;
         // Type R with opcode = 0
+        if (["SLLI", "SRLI", "SRAI", "SEQI", "SNEI", "SLTI", "SGTI", "SLEI", "SGEI"].includes(instruction_name)) {
+          return `${instruction_name} R${rX}, R${rY}, ${"0x" + rZ.toString(16).toUpperCase()}`;
+        }
         return `${instruction_name} R${rd0}, R${rs1}, R${rs2}`;
       }
-      return "Instruction error #0";
+      return "Instruction error OPCode #0";
     }
 
     const is_OPCODE_1 = opcode === "000001";
@@ -215,7 +282,7 @@ export namespace Utils {
         // Type R with opcode = 1
         return `${instruction_name} F${rd0F}, F${rs1F}, F${rs2F}`;
       }
-      return "Instruction error #1";
+      return "Instruction error OPCode #1";
     }
 
     // Others OPCODES
@@ -231,36 +298,41 @@ export namespace Utils {
         const instruction_name = obj_instruction_type_i_or_j.name;
         // Type I or type J
         const isTypeIorJ = [
-          "ADDI",
-          "ADDUI",
-          "SUBI",
-          "SUBUI",
-          "ANDI",
-          "ORI",
-          "XORI",
-        ].includes(instruction_name);
+          "ADDI", "ADDUI", "SUBI", "SUBUI",
+          "ANDI", "ORI", "XORI",].includes(instruction_name);
         if (isTypeIorJ) {
-          return `${instruction_name} R${rd0I}, R${rs1I}, #${data}`;
+          return `${instruction_name} R${rd0I}, R${rs1I}, ${"0x" + d_data_16b.toString(16).toUpperCase()}`;
         }
         if (instruction_name === "LHI") {
-          return `${instruction_name} R${rd0I}#${data}`;
+          return `${instruction_name} R${rd0I}, ${"0x" + d_data_16b.toString(16).toUpperCase()}`;
         }
 
         // Type J
         if (["J", "JAL"].includes(instruction_name)) {
-          return `${instruction_name} #${data}`;
+          const b_complement = Utils.twosComplement(-d_data_26b, 26);
+          const d_complement = parseInt(b_complement, 2);
+          const d_tagAddress = parseInt(h_addressPC, 16);
+          const h_addressToJump = ((d_tagAddress - d_complement) + 4).toString(16).padStart(8, "0");
+          const objectTag = tags.get(`0x${h_addressToJump}`);
+          const tagLabel = objectTag !== undefined ? objectTag.label : "_ERROR_";
+          return `${instruction_name} ${tagLabel}`;
         }
         if (["BEQZ", "BNEZ"].includes(instruction_name)) {
-          return `${instruction_name} R${rs1I} #${data}`;
+          const d_index_AddressToJump = d_data_16b;
+          const d_index_AddressPC = parseInt(`0x${h_addressPC}`, 16);
+          const h_addressToJump = ((d_index_AddressPC + d_index_AddressToJump + 4)).toString(16).padStart(8, "0").toUpperCase();
+          const objectTag = tags.get(`0x${h_addressToJump}`);
+          const tagLabel = objectTag !== undefined ? objectTag.label : "_ERROR_";
+          return `${instruction_name} R${rs1I}, ${tagLabel}`;
         }
         if (["BFPT", "BFPF"].includes(instruction_name)) {
-          return `${instruction_name} #${data}`;
+          return `${instruction_name} ${"0x" + d_data_16b}`;
         }
         if (instruction_name === "RFE") {
           return instruction_name;
         }
         if (instruction_name === "TRAP") {
-          return `${instruction_name} #${data_26}`;
+          return `${instruction_name} ${"0x" + d_data_26b.toString(16).toUpperCase()}`;
         }
 
         // No se de que tipo son :3 supongamos que de tipo I
@@ -268,34 +340,18 @@ export namespace Utils {
           return `${instruction_name} R${rs1I}`;
         }
 
-        if (
-          [
-            "SLLI",
-            "SRLI",
-            "SRAI",
-            "SEQI",
-            "SNEI",
-            "SLTI",
-            "SGTI",
-            "SLEI",
-            "SGEI",
-          ].includes(instruction_name)
-        ) {
-          return `${instruction_name} R${rd0I}, R${rs1I}, #${data}`;
-        }
-
         if (["LB", "LH", "LW", "LBU", "LHU"].includes(instruction_name)) {
-          return `${instruction_name} R${rd0I}, ##${data}(R${rs1I})`;
+          return `${instruction_name} R${rd0I}, #${d_data_16b}(R${rs1I})`;
         }
         if (["LF", "LD"].includes(instruction_name)) {
-          return `${instruction_name} F${rd0I}, ##${data}(R${rs1I})`;
+          return `${instruction_name} F${rd0I}, #${d_data_16b}(R${rs1I})`;
         }
 
         if (["SB", "SH", "SW"].includes(instruction_name)) {
-          return `${instruction_name} ##${data}(R${rs1I}), R${rd0I}`;
+          return `${instruction_name} #${d_data_16b}(R${rs1I}), R${rd0I}`;
         }
         if (["SF", "SD"].includes(instruction_name)) {
-          return `${instruction_name} ##${data}(R${rs1I}), F${rd0I}`;
+          return `${instruction_name} #${d_data_16b}(R${rs1I}), F${rd0I}`;
         }
       }
       return "Instruction error #1";
@@ -304,12 +360,12 @@ export namespace Utils {
     return "Instruction error #-1";
   }
 
-  export function convertMachineInstructionToHexCode_DLX(_instruction: string): string {
+  export function convertMachineInstructionToHexCode_DLX(_instruction: string, tags: Map<TypeAddress, TypeAddressLabel>, addressPC: string): string {
     const instruction = _instruction.toUpperCase();
-    const textParser = instruction.match(/[\w]+/gm);
+    const textParser = instruction.match(/[\w#]+/gm);
     if (!textParser) {
-      console.log("_instruction", _instruction);
-      console.log("textParser", textParser);
+      console.warn("_instruction", _instruction);
+      console.warn("textParser", textParser);
       throw new Error("Can't parser");
     }
     // console.log("textParser: ", textParser);
@@ -324,9 +380,10 @@ export namespace Utils {
     const isTypeIorJ = OPCODES_TYPE_I_J.some((v) => {
       return v.name === nameInstruction;
     });
+    // console.log("Type Instruction: ", instruction, isTypeR_OPCODE_0, isTypeR_OPCODE_1, isTypeIorJ);
 
     if (isTypeR_OPCODE_0 || isTypeR_OPCODE_1) {
-      const opcode = isTypeR_OPCODE_0 ? '000000' : '000001';
+      const opcode_6b = isTypeR_OPCODE_0 ? "000000" : "000001";
       const firstNum = textParser[2].slice(1);
       const secondNum = textParser[3].slice(1);
       const thirdNum = textParser[1].slice(1);
@@ -334,52 +391,149 @@ export namespace Utils {
         .filter((v) => {
           return v.name === nameInstruction;
         })[0];
-      const first = parseInt(firstNum, 10).toString(2).padStart(5, '0');
-      const second = parseInt(secondNum, 10).toString(2).padStart(5, '0');
-      const third = parseInt(thirdNum, 10).toString(2).padStart(5, '0');
-      const binaryNull = "".padStart(5, '0');
+      const first = parseInt(firstNum, 10).toString(2).padStart(5, "0");
+      const second = parseInt(secondNum, 10).toString(2).padStart(5, "0");
+      const third = parseInt(thirdNum, 10).toString(2).padStart(5, "0");
+      const binaryNull = "".padStart(5, "0");
 
-      const binary = `${opcode}${first}${second}${third}${binaryNull}${code.operation}`;
-      return parseInt(binary, 2).toString(16).padStart(8, '0');
-      // return "HexCodeError #-1";
+
+      if (nameInstruction === "SRLI") {
+        // console.debug(binary, `0x${resultHex}`, textParser, `${code.opcode} |  ${binaryNull}`);
+        const binary_RX = parseInt(textParser[1].slice(1), 10).toString(2).padStart(5, "0");
+        const binary_RY = parseInt(textParser[2].slice(1), 10).toString(2).padStart(5, "0");
+        const binary_Z = parseInt(textParser[3].slice(1), 10).toString(2).padStart(5, "0");
+        const binaryNull5 = "".padStart(5, "0");
+        const binary = `${opcode_6b}${binary_RY}${binaryNull5}${binary_RX}${binary_Z}${code.operation}`;
+        const resultHex = parseInt(binary, 2).toString(16).padStart(8, "0").toUpperCase();
+        // console.debug(binary, `0x${resultHex}`, textParser, `${binaryNull5}${binary_RY}${binaryNull5}${binary_RX}${binary_Z}${code.operation}`);
+        return resultHex;
+      }
+
+      const binary = `${opcode_6b}${first}${second}${third}${binaryNull}${code.operation}`;
+      return parseInt(binary, 2).toString(16).padStart(8, "0").toUpperCase();
     }
+
     if (isTypeIorJ) {
       const code = OPCODES_TYPE_I_J.filter((v) => {
         return v.name === nameInstruction;
       })[0];
-
+      const binaryAddressTagLabel = "".padStart(26, "0");
       // Type J
-      if (["J", "JAL"].includes(code.name)) {
-        const num = getRandomInt(1, 100).toString(2).padStart(26, '0');
-        return parseInt(code.opcode + num, 2).toString(16).padStart(8, '0');
+      if (Array.from(tags.values()).some((v) => v.label === textParser[1])) {
+        const { addressTagLabel } = [...tags.values()].filter(v => v.label === textParser[1])[0];
+        if (["J", "JAL"].includes(code.name)) {
+          const p0 = parseInt(addressTagLabel, 16);
+          const p1 = parseInt(addressPC, 16);
+          const countAddressJump = ((p0 - p1) - 4);
+          const binaryJump = Utils.twosComplement(countAddressJump, 26) as string;
+          const binary = `${code.opcode}${binaryJump}`;
+          const resultHex = parseInt(binary, 2).toString(16).padStart(8, "0").toUpperCase();
+          // console.debug(binary, `0x${resultHex}`, textParser, `${code.opcode} |  ${binaryJump}`);
+          return resultHex;
+        }
+        if (["BFPT", "BFPF"].includes(code.name)) {
+          const binary = `${code.opcode}${binaryAddressTagLabel}`;
+          const resultHex = parseInt(binary, 2).toString(16).padStart(8, "0").toUpperCase();
+          // console.debug(binary, `0x${resultHex}`, textParser, `${code.opcode} |  ${binaryAddressTagLabel}`);
+          return resultHex;
+        }
+        return "HexCodeError # {J, JAL}";
       }
-      if (["BEQZ", "BNEZ"].includes(code.name)) {
-        const binaryNull = getRandomInt(1, 100).toString(2).padStart(26, '0');
-        return parseInt(code.opcode + binaryNull, 2).toString(16).padStart(8, '0');
+      if (Array.from(tags.values()).some((v) => v.label === textParser[2])) {
+        // Ex: beqz r1,label
+        if (["BEQZ", "BNEZ"].includes(code.name)) {
+          const binaryRNum = parseInt(textParser[1].slice(1), 10).toString(2).padStart(5, "0");
+          const binaryNull5 = "".padStart(5, "0");
+          const o = Array.from(tags.values()).filter((v) => {
+            return v.label === textParser[2];
+          })[0];
+          const d_tagAddress = parseInt(o.addressTagLabel, 16);
+          const complement = Utils.twosComplement(d_tagAddress, 16);
+          const d_complement = parseInt(complement, 2);
+          const d_addressPC = parseInt(addressPC, 16);
+          const binary16bJump = ((d_complement - d_addressPC) - 4).toString(2).padStart(16, "0");
+          const binary = `${code.opcode}${binaryRNum}${binaryNull5}${binary16bJump}`.padStart(32, "0");
+          const resultHex = parseInt(binary, 2).toString(16).padStart(8, "0").toUpperCase();
+          // console.debug(binary, `0x${resultHex}`, textParser, `${code.opcode} | ${binaryRNum} | ${binaryNull5} | ${binary16bJump}`);
+          return resultHex;
+        }
+        return "HexCodeError # {BEQZ, BNEZ}";
       }
-      if (["BFPT", "BFPF"].includes(code.name)) {
-        const binaryNull = getRandomInt(1, 100).toString(2).padStart(26, '0');
-        return parseInt(code.opcode + binaryNull, 2).toString(16).padStart(8, '0');
+      // TODO
+      if (["SW", "SF", "SD"].includes(nameInstruction)) {
+        const binaryNull_5b = "".padStart(5, "0");
+        const binaryNull_6b = "".padStart(6, "0");
+        const binary = `${code.opcode}${binaryNull_5b}${binaryNull_5b}${binaryNull_5b}${binaryNull_5b}${binaryNull_6b}`;
+        const resultHex = parseInt(binary, 2).toString(16).padStart(8, "0").toUpperCase();
+        // console.debug(binary, `0x${resultHex}`, textParser, `${code.opcode} | ${binaryRNum} | ${binaryNull5} | ${binary16bJump}`);
+        return resultHex;
       }
       if (nameInstruction === "RFE") {
-        const binaryNull = "".padStart(26, '0');
-        return parseInt(code.opcode + binaryNull, 2).toString(16).padStart(8, '0');
+        const binaryNull = "".padStart(26, "0");
+        const binary = `${code.opcode}${binaryNull}`;
+        const resultHex = parseInt(binary, 2).toString(16).padStart(8, "0").toUpperCase();
+        // console.debug(binary, `0x${resultHex}`, textParser, `${code.opcode} |  ${binaryNull}`);
+        return resultHex;
       }
       if (nameInstruction === "TRAP") {
-        const binaryNull = "".padStart(26, '0');
-        return parseInt(code.opcode + binaryNull, 2).toString(16).padStart(8, '0');
+        const binaryNull = "".padStart(26, "0");
+        const binary = `${code.opcode}${binaryNull}`;
+        const resultHex = parseInt(binary, 2).toString(16).padStart(8, "0").toUpperCase();
+        // console.debug(binary, `0x${resultHex}`, textParser, `${code.opcode} |  ${binaryNull}`);
+        return resultHex;
       }
+      // TODO
 
       // Type I
-      const first = parseInt(textParser[1].slice(1), 10).toString(2).padStart(5, '0');
-      const second = parseInt(textParser[2].slice(1), 10).toString(2).padStart(5, '0');
-      const num = parseInt(textParser[3], 10).toString(2).padStart(16, '0');
+      // const first = parseInt(textParser[1].slice(1), 10).toString(2).padStart(5, "0");
+      // const second = parseInt(textParser[2].slice(1), 10).toString(2).padStart(5, "0");
+      // const num = parseInt(textParser[3], 10).toString(2).padStart(16, "0");
+      // console.log(textParser, tags.entries());
 
-      return parseInt(code.opcode + first + second + num, 2).toString(16).padStart(8, '0');
+      const firstTerm = textParser[1].slice(1);
+      const secondTerm = textParser[2].slice(1);
+
+      let thirdTerm = "0";
+      const isThirdTermRegister = (/[RF]/.test(textParser[3])) ? "Register" : false;
+      if (isThirdTermRegister === "Register") {
+        thirdTerm = textParser[3].slice(1) as string;
+      }
+      const isThirdTermValue = (/[#]/.test(textParser[3])) ? "Value" : false;
+      if (isThirdTermValue === "Value") {
+        thirdTerm = textParser[3].slice(1) as string;
+      }
+      const first = parseInt(secondTerm, 10).toString(2).padStart(5, "0");
+      const second = parseInt(firstTerm, 10).toString(2).padStart(5, "0");
+      const num = parseInt(thirdTerm, 10).toString(2).padStart(16, "0");
+
+      const binary = `${code.opcode}${first}${second}${num}`;
+      const resultHex = parseInt(binary, 2).toString(16).padStart(8, "0").toUpperCase();
+      // console.debug(binary, `0x${resultHex}`, textParser, `${code.opcode} |  ${first} | ${second} | ${num}`);
+      return resultHex;
       // return "HexCodeError #-3";
     }
-    return "HexCodeError #0";
+    console.log("_instruction Error", _instruction);
+    return "HexCodeError #-1";
   }
+
+  export function padAndChop(str: string, padChar: string, length: number): string {
+    return (Array(length).fill(padChar).join("") + str).slice(length * -1);
+  }
+
+  export function twosComplement(value: number, bitCount: number): string {
+    let binaryStr;
+    if (value >= 0) {
+      const twosComp = value.toString(2);
+      binaryStr = padAndChop(twosComp, "0", (bitCount || twosComp.length));
+    } else {
+      binaryStr = ((2 ** bitCount) + value).toString(2);
+      if (Number(binaryStr) < 0) {
+        throw new Error("Number(binaryStr) < 0");
+      }
+    }
+    return `${binaryStr}`;
+  }
+
 
   export function getInstructionFromLine(line: string): string {
     return line.toUpperCase();
@@ -399,7 +553,7 @@ export namespace Utils {
     let str = "";
     const c = new Uint8Array(new Float32Array([float32]).buffer, 0, 4);
     for (const element of Array.from(c).reverse()) {
-      str += element.toString(2).padStart(8, '0');
+      str += element.toString(2).padStart(8, "0");
     }
     return str;
   }
@@ -408,7 +562,7 @@ export namespace Utils {
     let str = "";
     const c = new Uint8Array(new Float64Array([double64]).buffer, 0, 8);
     for (const element of Array.from(c).reverse()) {
-      str += element.toString(2).padStart(8, '0');
+      str += element.toString(2).padStart(8, "0");
     }
     return str;
   }
