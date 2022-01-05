@@ -147,17 +147,20 @@ export default class ManagerMemory {
           (e1[0]?.value ?? 0).toString(2).padStart(8, "0") +
           (e2[0]?.value ?? 0).toString(2).padStart(8, "0") +
           (e3[0]?.value ?? 0).toString(2).padStart(8, "0");
+        const address = `0x${index.toString(16).padStart(8, "0").toUpperCase()}`;
+        const hexadecimal = `0x${parseInt(binary32, 2).toString(16).padStart(8, "0").toUpperCase()}`;
         resultElements.push({
-          address:    index.toString(16).padStart(8, "0").toUpperCase(),
-          index:      index,
-          binary32:   binary32,
-          byte_0:     parseInt(binary32.substr(0, 8), 2),
-          byte_1:     parseInt(binary32.substr(8, 8), 2),
-          byte_2:     parseInt(binary32.substr(16, 8), 2),
-          byte_3:     parseInt(binary32.substr(24, 8), 2),
-          halfword_0: parseInt(binary32.substr(0, 16), 2),
-          halfword_1: parseInt(binary32.substr(16, 8), 2),
-          word:       parseInt(binary32.substr(0, 32), 2),
+          address:     address,
+          index:       index,
+          binary32:    binary32,
+          hexadecimal: hexadecimal,
+          byte_0:      parseInt(binary32.substr(0, 8), 2),
+          byte_1:      parseInt(binary32.substr(8, 8), 2),
+          byte_2:      parseInt(binary32.substr(16, 8), 2),
+          byte_3:      parseInt(binary32.substr(24, 8), 2),
+          halfword_0:  parseInt(binary32.substr(0, 16), 2),
+          halfword_1:  parseInt(binary32.substr(16, 8), 2),
+          word:        parseInt(binary32.substr(0, 32), 2),
         });
       }
     }

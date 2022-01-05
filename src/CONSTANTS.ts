@@ -29,6 +29,7 @@ export const REGISTERS_OF_CONTROL: TypeRegisterControl[] = [
 ];
 export const REGEX_TYPE_DIRECTIVE = (/(.(GLOBAL|TEXT|SPACE|DATA|ALIGN|ASCII|ASCIIZ|BYTE|FLOAT|DOUBLE|WORD))/i);
 export const REGEX_TYPE_DIRECTIVE_VECTOR = (/(.(GLOBAL|TEXT|SPACE|DATA|ALIGN|ASCII|ASCIIZ|BYTE|FLOAT|DOUBLE|WORD)|\d+)/igm);
+export const REGEX_TYPE_LOAD_PARSER = /(?<TypeLoad>LB|LH|LW|LBU|LHU|LF|LD|SW|SF|SD)\s+((?<RegisterDest>(?<Register0Type_>(R|F|D))(?<Register0Index_>\d+))|(?<RegisterDestLabel>(?<Label0>\w+)?\(?(?<Register0Type>(R|F|D))?(?<Register0Index>(\d+))?\)?))\s*,?\s*((?<Register1Type>R|F|D)(?<Register1Index>\d+)|(?<Label1>\w+)?\(?(?<Register1Type_>R|F|D)?(?<Register1Index_>\d+)?\)?)/i;
 export const REGEX_TAG_LABEL = /\w+:/im;
 export const REGEX_GLOBAL_DIRECTIVE = /(.GLOBAL\s*)(\w+)/im;
 

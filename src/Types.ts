@@ -352,6 +352,7 @@ export type TypeAllMemoryAddressBinary = {
   address: string;
   index: number;
   binary32: string;
+  hexadecimal: string;
   byte_0: number;
   byte_1: number;
   byte_2: number;

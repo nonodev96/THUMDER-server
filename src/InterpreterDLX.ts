@@ -1,40 +1,27 @@
 import { Table } from "console-table-printer";
 import { Utils } from "./Utils";
-import {
-  TypeAddress,
-  TypeAddressDirectiveLabel,
-  TypeCode,
-  TypeDirective,
-  TypeAddressLabel,
-  TypeTagLabel, TypeAddressDirectiveLabelData, TypeAllMemoryAddressBinary
-} from "./Types";
+import { TypeAddress, TypeCode, TypeAddressLabel, TypeAddressDirectiveLabelData, TypeAllMemoryAddressBinary } from "./Types";
 import { REGEX_GLOBAL_DIRECTIVE, REGEX_TAG_LABEL } from "./CONSTANTS";
 import ManagerMemory from "./DLX/ManagerMemory";
 
 export default class InterpreterDLX {
-  private content: string;
 
+  private readonly content;
   private readonly addressDirectiveLabelData: Map<TypeAddress, TypeAddressDirectiveLabelData & { text: string }>;
-  private code: Map<TypeAddress, TypeCode>;
   private readonly addressLabel: Map<TypeAddress, TypeAddressLabel>;
-  private directives: Map<TypeAddress, TypeAddressDirectiveLabel>;
-  private memory: ManagerMemory;
+  private readonly memory: ManagerMemory;
+  private readonly code: Map<TypeAddress, TypeCode>;
 
-  constructor() {
-    this.content = "content";
+  constructor(content: string) {
+    this.content = content;
+    this.memory = new ManagerMemory(512);
     this.addressDirectiveLabelData = new Map<TypeAddress, TypeAddressDirectiveLabelData & { text: string }>();
     this.addressLabel = new Map<TypeAddress, TypeAddressLabel>();
-    this.directives = new Map<TypeAddress, TypeAddressDirectiveLabel>();
     this.code = new Map<TypeAddress, TypeCode>();
-    this.memory = new ManagerMemory(512);
   }
 
   public getContent(): string {
     return this.content;
-  }
-
-  public setContent(content: string): void {
-    this.content = content;
   }
 
   public analyze(): void {
@@ -46,35 +33,7 @@ export default class InterpreterDLX {
     this.interpreterInstructions(linesInstructionsAndTags);
     this.printInstructions();
 
-    for (const [_address, _addressDirectiveLabelData] of this.addressDirectiveLabelData.entries()) {
-
-    }
-
-    for (const [_address, _code] of this.code.entries()) {
-      this.memory.setMemoryWordBinaryByAddress(_address, parseInt(_code.code, 16).toString(2).padStart(32, '0'));
-    }
-
-    const allMemory = this.memory.getAllMemoryAddressBinary();
-    const memoryTable = new Map<TypeAddress, TypeAllMemoryAddressBinary>();
-    for (const memory of allMemory) {
-      memoryTable.set(memory.address, memory);
-    }
-    const table_Memory = new Table({
-      columns: [
-        { name: "address", alignment: "left", color: "blue" },
-        { name: "index", alignment: "left", color: "blue" },
-        { name: "byte_0", alignment: "left", color: "green" },
-        { name: "byte_1", alignment: "left", color: "green" },
-        { name: "byte_2", alignment: "left", color: "green" },
-        { name: "byte_3", alignment: "left", color: "green" },
-        { name: "halfword_0", alignment: "left", color: "green" },
-        { name: "halfword_1", alignment: "left", color: "green" },
-        { name: "word", alignment: "left", color: "green" },
-        { name: "binary32", alignment: "left", color: "magenta" },
-      ],
-    });
-    table_Memory.addRows(memoryTable);
-    table_Memory.printTable();
+    this.printMemory();
   }
 
   private interpreterDirectives(linesDirectivesAndTags: string[]) {
@@ -115,25 +74,26 @@ export default class InterpreterDLX {
       switch (directive) {
         case "DATA": {
           // .data [address]
-          _addressPCNum = 0x0;
+          const [address] = data;
+          _addressPCNum = parseInt(address ?? 0x0, 10);
           break;
         }
         case "TEXT": {
           // .text [address]
-          _addressPCNum = 0x100;
+          const [address] = data;
+          _addressPCNum = parseInt(address ?? 0x100, 10);
           break;
         }
         case "SPACE": {
           _addressPCNum += parseInt(data[0], 10) as number;
           objDirective.address = _addressPCNum.toString(16).padStart(8, "0").toUpperCase();
-          this.addressDirectiveLabelData.set(objDirective.address, objDirective);
           break;
         }
         case "GLOBAL": {
           const [_input, _p_directive, _label] = lineDirectivesAndTag.match(REGEX_GLOBAL_DIRECTIVE) as RegExpMatchArray;
           // console.log("GLOBAL", _input, _p_directive, _label);
           objDirective.data = [_label];
-          _addressPCNum += 4;
+          // _addressPCNum += 4;
           break;
         }
         case "BYTE": {
@@ -142,7 +102,7 @@ export default class InterpreterDLX {
         }
         case "WORD": {
           for (const num of data) {
-            const address = _addressPCNum.toString(16).padStart(8, "0").toUpperCase();
+            const address = `0x${addressPCNum.toString(16).padStart(8, "0").toUpperCase()}`;
             const num_binary = parseInt(num, 10).toString(2).padStart(32, "0");
             this.memory.setMemoryWordBinaryByAddress(address, num_binary);
             _addressPCNum += 4;
@@ -151,7 +111,7 @@ export default class InterpreterDLX {
         }
         case "FLOAT": {
           for (const num of data) {
-            objDirective.address = _addressPCNum.toString(16).padStart(8, "0").toUpperCase();
+            objDirective.address = `0x${addressPCNum.toString(16).padStart(8, "0").toUpperCase()}`;
             const num_ieee754_32 = Utils.convertIEEE754_Number_To_Binary32Bits(parseFloat(num));
             this.memory.setMemoryFloatBinaryByAddress(objDirective.address, num_ieee754_32);
             _addressPCNum += 4;
@@ -160,7 +120,7 @@ export default class InterpreterDLX {
         }
         case "DOUBLE": {
           for (const num of data) {
-            objDirective.address = _addressPCNum.toString(16).padStart(8, "0").toUpperCase();
+            objDirective.address = `0x${addressPCNum.toString(16).padStart(8, "0").toUpperCase()}`;
             const num_ieee754_64 = Utils.convertIEEE754_Number_To_Binary64Bits(parseFloat(num));
             this.memory.setMemoryDoubleBinaryByAddress(objDirective.address, num_ieee754_64);
             _addressPCNum += 8;
@@ -168,12 +128,15 @@ export default class InterpreterDLX {
           break;
         }
         case "ALIGN": {
+          // TODO
           break;
         }
         case "ASCII": {
+          // TODO
           break;
         }
         case "ASCIIZ": {
+          // TODO
           break;
         }
         default: {
@@ -182,7 +145,7 @@ export default class InterpreterDLX {
         }
       }
 
-      objDirective.address = addressPCNum.toString(16).padStart(8, "0").toUpperCase();
+      objDirective.address = `0x${addressPCNum.toString(16).padStart(8, "0").toUpperCase()}`;
       this.addressDirectiveLabelData.set(objDirective.address, objDirective);
       addressPCNum = _addressPCNum;
       tagLabel = "";
@@ -244,8 +207,8 @@ export default class InterpreterDLX {
         }
         case "instruction": {
           instructionLineString = Utils.getInstructionFromLine(line);
-          codeHex = Utils.convertMachineInstructionToHexCode_DLX(instructionLineString, this.addressLabel, addressPC);
-          instructionString = Utils.convertHexCodeToMachineInstruction_DLX(codeHex, this.addressLabel, addressPC);
+          codeHex = Utils.convertMachineInstructionToHexCode_DLX(instructionLineString, addressPC, this.addressLabel, this.addressDirectiveLabelData);
+          instructionString = Utils.convertHexCodeToMachineInstruction_DLX(codeHex, addressPC, this.addressLabel, this.addressDirectiveLabelData);
           let text = "";
           text = addressTagNum === 0 ? `${TAG_label}` : `${TAG_label}+0x${addressTag}`;
           text = addressPC === "00000100" ? `${defaultTEXT}` : text;
@@ -265,14 +228,10 @@ export default class InterpreterDLX {
         }
       }
     }
-  }
 
-  public getCode(): TypeCode[] {
-    return Array.from(this.code.values());
-  }
-
-  public getTags(): TypeAddressLabel[] {
-    return Array.from(this.addressLabel.values());
+    for (const [_address, _code] of this.code.entries()) {
+      this.memory.setMemoryWordBinaryByAddress(_address, parseInt(_code.code, 16).toString(2).padStart(32, "0"));
+    }
   }
 
   private printDirectives() {
@@ -332,4 +291,42 @@ export default class InterpreterDLX {
     table_tags.addRows(merge);
     table_tags.printTable();
   }
+
+  private printMemory() {
+    const allMemory = this.memory.getAllMemoryAddressBinary();
+    const memoryTable = new Map<TypeAddress, TypeAllMemoryAddressBinary>();
+    for (const memory of allMemory) {
+      memoryTable.set(memory.address, memory);
+    }
+    const table_Memory = new Table({
+      columns: [
+        { name: "index", alignment: "left", color: "blue" },
+        { name: "address", alignment: "left", color: "blue" },
+        { name: "hexadecimal", alignment: "left", color: "yellow" },
+        { name: "byte_0", alignment: "left", color: "green" },
+        { name: "byte_1", alignment: "left", color: "green" },
+        { name: "byte_2", alignment: "left", color: "green" },
+        { name: "byte_3", alignment: "left", color: "green" },
+        { name: "halfword_0", alignment: "left", color: "green" },
+        { name: "halfword_1", alignment: "left", color: "green" },
+        { name: "word", alignment: "left", color: "green" },
+        { name: "binary32", alignment: "left", color: "magenta" },
+      ],
+    });
+    table_Memory.addRows(memoryTable);
+    table_Memory.printTable();
+  }
+
+  public getLabels(): TypeAddressLabel[] {
+    return Array.from(this.addressLabel.values());
+  }
+
+  public getCode(): TypeCode[] {
+    return Array.from(this.code.values());
+  }
+
+  public getMemory(): ManagerMemory {
+    return this.memory;
+  }
+
 }

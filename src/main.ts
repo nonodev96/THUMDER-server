@@ -41,8 +41,7 @@ server.on("connection", (socket) => {
     console.log("CodeRequest Args");
     Manager.checkArgs(args);
     const file: File = JSON.parse(args) as File;
-    const interpreter = new InterpreterDLX();
-    interpreter.setContent(file.content);
+    const interpreter = new InterpreterDLX(file.content);
     interpreter.analyze();
     const response = interpreter.getCode();
 

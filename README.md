@@ -111,13 +111,17 @@ Para arreglar estos fallos debemos hacer algunos cambios en las estructuras de d
 así como en la clase Utils y UtilsEEDD.
 
 Fallos detectados:
- * No se cambia en el interprete las labels.
-   * Ejemplo: "TABLE" y "$DATA"
-   * No se calcula correctamente la instrucción "SW TABLE(R1), R2" en la dirección "0x00000140" por el fallo mencionado anteriormente
  * En el interprete de las directivas no se realizan las operaciones. 
    * Ejemplo: "TABLE: .SPACE COUNT * 4" no se realiza la operación COUNT * 4 que debería dar 40
  * Este error es menor y no supone ningún cambio, WinDLX no genera algunos tags ya que detecta que se realiza un salto y por tanto le pone de nombre la dirección de memoria donde se almacena, en nuestro caso esto no es así y le ponemos de nombre el que le corresponde por dirección de memoria y por posición. 
    * Ejemplo: "instruction": "BNEZ R11, FINISH" | "text": "0x00000154" => "text": "ISPRIM+0x14"
+
+### FIXED
+
+* Se cambia en el interprete las labels.
+   * Ejemplo: "TABLE" y "COUNT"
+   * Se calcula correctamente la instrucción "SW TABLE(R1), R2" en la dirección "0x00000140" por el fallo mencionado anteriormente
+
 
 ## TEST prim.s
 

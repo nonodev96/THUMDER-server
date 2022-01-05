@@ -84,13 +84,14 @@ export default class Machine {
     this.content = content;
   }
 
-  public getMachineCode(content: string) {
-    const interpreter = new InterpreterDLX();
-    interpreter.setContent(content);
+  public getMachineMemoryDirectivesTagsCode(content: string) {
+    const interpreter = new InterpreterDLX(content);
     interpreter.analyze();
+    const memory = interpreter.getMemory();
+    const directives = interpreter.getCode();
+    const tags = interpreter.getLabels();
     const code = interpreter.getCode();
-    const tags = interpreter.getTags();
-    return { code, tags };
+    return { directives, tags, code, memory };
   }
 
   public SimulationInit(simulationInitRequest: TypeSimulationInitRequest): TypeSimulationInitResponse {
@@ -98,11 +99,11 @@ export default class Machine {
     this.reset();
     // const response = fs.readFileSync(path.resolve(__dirname, "../assets/examples-dlx/example-prim.json"), "utf-8");
     // const simulationInit: TypeSimulationInitResponse = JSON.parse(response) as TypeSimulationInitResponse;
-    const interpreter = new InterpreterDLX();
-    interpreter.setContent(content);
+    const interpreter = new InterpreterDLX(content);
     interpreter.analyze();
+    this.memory = interpreter.getMemory();
 
-    const code: TypeCode[] = interpreter.getCode();
+    const code = interpreter.getCode();
     const runner: TypeSimulationStep[] = [
       DEFAULT_SIMULATION_STEP_VOID
     ];

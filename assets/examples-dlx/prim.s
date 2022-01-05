@@ -7,16 +7,16 @@
 ; GENERATES A TABLE WITH THE FIRST 'COUNT' PRIME NUMBERS FROM 'TABLE'
 ;-------------------------------------------------------------------
 
-		    .DATA
+		.DATA 0
 
-		    ;*** SIZE OF TABLE
-		    .GLOBAL		COUNT
-COUNT:		.WORD		10
-		    .GLOBAL		TABLE
-TABLE:		.SPACE		COUNT*4
+        ;*** SIZE OF TABLE
+		.GLOBAL		COUNT
+COUNT:	.WORD		10
 
+		.GLOBAL		TABLE
+TABLE:	.SPACE		COUNT*4
 
-		.TEXT
+        .TEXT 256
 		.GLOBAL	MAIN
 
 		;*** INITIALIZATION

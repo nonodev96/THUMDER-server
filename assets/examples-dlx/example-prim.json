@@ -51,7 +51,7 @@
       "address": "0x0000011C",
       "text": "LOOP+0x8",
       "instruction": "LW R5, TABLE(R3)",
-      "code": "0x8C651004"
+      "code": "0x8C650004"
     },
     {
       "address": "0x00000120",
@@ -104,7 +104,7 @@
     {
       "address": "0x00000140",
       "text": "ISPRIM",
-      "code": "OxAC221004",
+      "code": "0xAC220004",
       "instruction": "SW TABLE(R1), R2"
     },
     {
@@ -116,8 +116,8 @@
     {
       "address": "0x00000148",
       "text": "ISPRIM+0x8",
-      "code": "0x8C091000",
-      "instruction": "SW R9, $DATA(R0)"
+      "code": "0x8C090000",
+      "instruction": "LW R9, COUNT(R0)"
     },
     {
       "address": "0x0000014C",
