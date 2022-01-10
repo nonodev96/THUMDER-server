@@ -1,23 +1,23 @@
 import { Table } from "console-table-printer";
 import { Utils } from "./Utils";
-import { TypeAddress, TypeCode, TypeAddressLabel, TypeAddressDirectiveLabelData, TypeAllMemoryAddressBinary } from "./Types";
+import { TypeAddress, TypeInstructionsData, TypeAddressLabel, TypeAddressDirectiveLabelData, TypeAllMemoryAddressBinary } from "./Types";
 import { REGEX_GLOBAL_DIRECTIVE, REGEX_TAG_LABEL } from "./CONSTANTS";
 import ManagerMemory from "./DLX/ManagerMemory";
 
 export default class InterpreterDLX {
 
   private readonly content;
-  private readonly addressDirectiveLabelData: Map<TypeAddress, TypeAddressDirectiveLabelData & { text: string }>;
+  private readonly addressDirectiveLabelData: Map<TypeAddress, TypeAddressDirectiveLabelData>;
   private readonly addressLabel: Map<TypeAddress, TypeAddressLabel>;
   private readonly memory: ManagerMemory;
-  private readonly code: Map<TypeAddress, TypeCode>;
+  private readonly machineInstructions: Map<TypeAddress, TypeInstructionsData>;
 
-  constructor(content: string) {
+  constructor(content: string, memory: ManagerMemory) {
     this.content = content;
-    this.memory = new ManagerMemory(512);
-    this.addressDirectiveLabelData = new Map<TypeAddress, TypeAddressDirectiveLabelData & { text: string }>();
+    this.memory = memory;
+    this.addressDirectiveLabelData = new Map<TypeAddress, TypeAddressDirectiveLabelData>();
     this.addressLabel = new Map<TypeAddress, TypeAddressLabel>();
-    this.code = new Map<TypeAddress, TypeCode>();
+    this.machineInstructions = new Map<TypeAddress, TypeInstructionsData>();
   }
 
   public getContent(): string {
@@ -61,7 +61,7 @@ export default class InterpreterDLX {
        [^\S\r\n]+
        (?=\w*[a-z])(?=\w*[0-9])\w+
        */
-      const objDirective: TypeAddressDirectiveLabelData & { text: string } = {
+      const objDirective: TypeAddressDirectiveLabelData = {
         address:   "",
         data:      data,
         directive: directive,
@@ -74,25 +74,26 @@ export default class InterpreterDLX {
       switch (directive) {
         case "DATA": {
           // .data [address]
-          const [address] = data;
+          const [address] = data ?? ["0"];
           _addressPCNum = parseInt(address ?? 0x0, 10);
           break;
         }
         case "TEXT": {
           // .text [address]
-          const [address] = data;
-          _addressPCNum = parseInt(address ?? 0x100, 10);
+          const [_address] = data ?? ["256"];
+          _addressPCNum = parseInt(_address ?? 0x100, 10);
           break;
         }
         case "SPACE": {
-          _addressPCNum += parseInt(data[0], 10) as number;
+          const [size] = data ?? ["0"];
+          _addressPCNum += parseInt(size, 10) as number;
           objDirective.address = _addressPCNum.toString(16).padStart(8, "0").toUpperCase();
           break;
         }
         case "GLOBAL": {
           const [_input, _p_directive, _label] = lineDirectivesAndTag.match(REGEX_GLOBAL_DIRECTIVE) as RegExpMatchArray;
-          // console.log("GLOBAL", _input, _p_directive, _label);
           objDirective.data = [_label];
+          // console.log("GLOBAL", _input, _p_directive, _label);
           // _addressPCNum += 4;
           break;
         }
@@ -218,7 +219,7 @@ export default class InterpreterDLX {
             text:        text,
             code:        `0x${codeHex}`,
           };
-          this.code.set(`0x${addressPC}`, instruction);
+          this.machineInstructions.set(`0x${addressPC}`, instruction);
           addressTagNum += 4;
           addressNum += 4;
           break;
@@ -229,7 +230,7 @@ export default class InterpreterDLX {
       }
     }
 
-    for (const [_address, _code] of this.code.entries()) {
+    for (const [_address, _code] of this.machineInstructions.entries()) {
       this.memory.setMemoryWordBinaryByAddress(_address, parseInt(_code.code, 16).toString(2).padStart(32, "0"));
     }
   }
@@ -265,7 +266,7 @@ export default class InterpreterDLX {
 
   private printInstructions() {
     const merge = new Map<TypeAddress, any>();
-    const code = this.code.entries();
+    const code = this.machineInstructions.entries();
     const CODE = [...code].sort(([address_a], [address_b]) => {
       const num_a = parseInt(address_a, 16);
       const num_b = parseInt(address_b, 16);
@@ -321,8 +322,8 @@ export default class InterpreterDLX {
     return Array.from(this.addressLabel.values());
   }
 
-  public getCode(): TypeCode[] {
-    return Array.from(this.code.values());
+  public getMachineInstructions(): TypeInstructionsData[] {
+    return Array.from(this.machineInstructions.values());
   }
 
   public getMemory(): ManagerMemory {

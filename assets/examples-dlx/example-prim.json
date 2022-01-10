@@ -4,7 +4,15 @@
   "date": "2021-08-28T10:25:00.000Z",
   "canSimulate": true,
   "lines": 68,
-  "code": [
+  "machineDirectives": [
+    {
+      "address": "0x00000000",
+      "text": "COUNT",
+      "directive": "WORD",
+      "hexValue": "0x0000000A"
+    }
+  ],
+  "machineInstructions": [
     {
       "address": "0x00000100",
       "text": "$TEXT",

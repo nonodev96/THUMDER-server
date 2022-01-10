@@ -77,6 +77,7 @@ export type TypeAddressDirectiveLabelData = {
   address?: TypeAddress;
   label?: string;
   data?: number[] | string[];
+  text?:string;
 }
 
 export type TypeAddressDirectiveNameData = {
@@ -379,14 +380,14 @@ export type TypeAllRegisters = {
   }[];
 };
 
-export type TypeCode = {
+export type TypeInstructionsData = {
   text?: string;
   address: string; // 0x00000000
   instruction: string; // 0x00000000
   code: string; // 0x00000000
 };
 
-export type TypeTableCode = TypeCode & {
+export type TypeInstructionsData_Table = TypeInstructionsData & {
   stage?: TypeStage;
   index?: number;
 };
@@ -525,6 +526,6 @@ export type TypeSimulationInitResponse = {
   lines: number;
   canSimulate: boolean;
 
-  code: TypeCode[];
+  machineInstructions: TypeInstructionsData[];
   runner: TypeSimulationStep[];
 };

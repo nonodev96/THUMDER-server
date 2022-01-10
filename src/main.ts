@@ -40,10 +40,11 @@ server.on("connection", (socket) => {
   socket.on("CodeRequest", (args, callback) => {
     console.log("CodeRequest Args");
     Manager.checkArgs(args);
+    const machine = manager.getMachine(socket.id);
     const file: File = JSON.parse(args) as File;
-    const interpreter = new InterpreterDLX(file.content);
+    const interpreter = new InterpreterDLX(file.content, machine.getMemory());
     interpreter.analyze();
-    const response = interpreter.getCode();
+    const response = interpreter.getMachineInstructions();
 
     if (typeof callback === "function") callback(JSON.stringify(response));
     socket.emit("CodeResponse", JSON.stringify(response));
@@ -93,7 +94,7 @@ server.on("connection", (socket) => {
   });
 
   socket.on("GetAllMemoryRequest", (args, callback) => {
-    console.log("UpdateMemoryRequest Args", args);
+    console.log("GetAllMemoryRequest Args", args);
     Manager.checkArgs(args);
     const machine = manager.getMachine(socket.id);
     const response = machine.getAllMemory();

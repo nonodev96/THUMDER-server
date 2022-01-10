@@ -5,7 +5,7 @@ import {
   TypeAddress,
   TypeAllMemory,
   TypeAllRegisters,
-  TypeCode, TypeCycleCell,
+  TypeInstructionsData, TypeCycleCell,
   TypeDataStatistics,
   TypeFloatingPointConfiguration,
   TypeMemoryToUpdate,
@@ -38,7 +38,7 @@ export default class Machine {
 
   private registers: ManagerRegisters;
 
-  public code: Map<TypeAddress, TypeCode>;
+  public code: Map<TypeAddress, TypeInstructionsData>;
 
   public tags: Map<TypeAddress, TypeTagLabel>;
 
@@ -80,17 +80,21 @@ export default class Machine {
     this.registers.PC.hexadecimal = "0x00000100";
   }
 
+  public getMemory() {
+    return this.memory;
+  }
+
   public setContent(content: string) {
     this.content = content;
   }
 
   public getMachineMemoryDirectivesTagsCode(content: string) {
-    const interpreter = new InterpreterDLX(content);
+    const interpreter = new InterpreterDLX(content, this.memory);
     interpreter.analyze();
     const memory = interpreter.getMemory();
-    const directives = interpreter.getCode();
+    const directives = interpreter.getMachineInstructions();
     const tags = interpreter.getLabels();
-    const code = interpreter.getCode();
+    const code = interpreter.getMachineInstructions();
     return { directives, tags, code, memory };
   }
 
@@ -99,39 +103,42 @@ export default class Machine {
     this.reset();
     // const response = fs.readFileSync(path.resolve(__dirname, "../assets/examples-dlx/example-prim.json"), "utf-8");
     // const simulationInit: TypeSimulationInitResponse = JSON.parse(response) as TypeSimulationInitResponse;
-    const interpreter = new InterpreterDLX(content);
-    interpreter.analyze();
-    this.memory = interpreter.getMemory();
+    this.registers.processResponse(registers);
+    this.memory.processResponse(memory);
 
-    const code = interpreter.getCode();
+    const interpreter = new InterpreterDLX(content, this.memory);
+    interpreter.analyze();
+
+
+    const memoryInterpreter = interpreter.getMemory();
+    for (const { address, binary32 } of memoryInterpreter.getAllMemoryAddressBinary()) {
+      this.memory.setMemoryWordBinaryByAddress(address, binary32);
+    }
+
+    const machineInstructions = interpreter.getMachineInstructions();
+    for (const instruction of machineInstructions) {
+      this.code.set(instruction.address, instruction);
+    }
+
     const runner: TypeSimulationStep[] = [
       DEFAULT_SIMULATION_STEP_VOID
     ];
-
     runner[0].registers[0] = {
       "typeRegister":     "Control",
       "register":         "PC",
       "hexadecimalValue": "0x00000100"
     };
 
-    for (const instruction of code) {
-      const binary32 = Utils.hexadecimalToBinary(instruction.code);
-      this.memory.setMemoryWordBinaryByAddress(instruction.address, binary32);
-      this.code.set(instruction.address, instruction);
-    }
-
-    this.registers.processResponse(registers);
-    this.memory.processResponse(memory);
-
 
     return {
-      id:          id,
-      filename:    filename,
-      date:        new Date(date).toISOString(),
-      canSimulate: true,
-      lines:       content.split("\n").length,
-      code:        code,
-      runner:      runner,
+      id:                  id,
+      filename:            filename,
+      date:                new Date(date).toISOString(),
+      canSimulate:         true,
+      lines:               content.split("\n").length,
+      machineDirectives:   [],
+      machineInstructions: machineInstructions,
+      runner:              runner,
     } as TypeSimulationInitResponse;
   }
 
