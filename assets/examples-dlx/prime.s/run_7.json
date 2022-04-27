@@ -36,13 +36,15 @@
         "fromAddressRow": 4,
         "fromStep": 6,
         "toAddressRow": 5,
-        "toStep": 7
+        "toStep": 7,
+        "color": "0x00FF00"
       },
       {
         "fromAddressRow": 5,
         "fromStep": 6,
         "toAddressRow": 6,
-        "toStep": 7
+        "toStep": 7,
+        "color": "0xFF0000"
       }
     ]
   },

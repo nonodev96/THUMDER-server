@@ -36,7 +36,8 @@
         "fromAddressRow": 5,
         "fromStep": 7,
         "toAddressRow": 6,
-        "toStep": 8
+        "toStep": 8,
+        "color": "0x00FF00"
       }
     ]
   },

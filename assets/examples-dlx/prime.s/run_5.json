@@ -53,6 +53,11 @@
       "typeRegister": "Control",
       "register": "ALU",
       "hexadecimalValue": "0x00000010"
+    },
+    {
+      "typeRegister": "Integer",
+      "register": "R2",
+      "hexadecimalValue": "0x00000002"
     }
   ],
   "memory": []

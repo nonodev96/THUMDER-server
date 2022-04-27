@@ -1,7 +1,7 @@
 import { Utils } from "../Utils";
 
 export class Int32 {
-  private _value: number = 0;
+  private _value = 0;
 
   get binary(): string {
     return this._value.toString(2).padStart(32, "0");
@@ -21,7 +21,7 @@ export class Int32 {
 }
 
 export class Float32 {
-  private _value: number = 0;
+  private _value = 0;
 
   get binary(): string {
     return Utils.convertIEEE754_Number_To_Binary32Bits(this._value);
@@ -33,7 +33,7 @@ export class Float32 {
 }
 
 export class Double64 {
-  private _value: number = 0;
+  private _value = 0;
 
   get binary(): string {
     return Utils.convertIEEE754_Number_To_Binary64Bits(this._value);

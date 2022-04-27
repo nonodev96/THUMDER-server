@@ -37,8 +37,10 @@
       "error",
       "never"
     ],
+    "no-await-in-loop": "warn",
     "@typescript-eslint/no-namespace": "off",
     "prefer-exponentiation-operator": "off",
+    "import/prefer-default-export": "off",
     "import/no-unresolved": "off",
     "import/extensions": "off",
     "object-shorthand": "off",

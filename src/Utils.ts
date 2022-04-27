@@ -1,8 +1,10 @@
 import fs from "fs";
 import {
   TypeAddress,
-  TypeAddressDirectiveLabel, TypeAddressDirectiveLabelData,
-  TypeAddressDirectiveNameData, TypeAddressLabel,
+  TypeAddressDirectiveLabel,
+  TypeAddressDirectiveLabelData,
+  TypeAddressDirectiveNameData,
+  TypeAddressLabel,
   TypeDirective,
   TypeTagLabel
 } from "./Types";
@@ -636,6 +638,11 @@ export namespace Utils {
     }
     const c = new Uint8Array(arr);
     return new DataView(c.buffer, 0, 8).getFloat64(0);
+  }
+
+  export function getRegisterNumber(str: string | number): number {
+    const num = str.toString();
+    return parseInt(num.replace(/\D/g, ""), 10);
   }
 
   export function LOG() {

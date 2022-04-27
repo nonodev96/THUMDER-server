@@ -1,5 +1,6 @@
 import { Float32, Int32 } from "./TypeData";
 import { TypeRegisterControl, TypeRegisterToUpdate } from "../Types";
+import { Utils } from "../Utils";
 
 export default class ManagerRegisters {
   PC: Int32;
@@ -62,7 +63,22 @@ export default class ManagerRegisters {
   }
 
   reset() {
-    const registerControl = ["PC", "IMAR", "IR", "A", "AHI", "B", "BHI", "BTA", "ALU", "ALUHI", "FPSR", "DMAR", "SDR", "SDRHI", "LDR", "LDRHI"];
+    const registerControl = ["PC",
+      "IMAR",
+      "IR",
+      "A",
+      "AHI",
+      "B",
+      "BHI",
+      "BTA",
+      "ALU",
+      "ALUHI",
+      "FPSR",
+      "DMAR",
+      "SDR",
+      "SDRHI",
+      "LDR",
+      "LDRHI"];
     for (const register of registerControl) {
       const r = register as TypeRegisterControl;
       this[r] = new Int32();
@@ -74,6 +90,44 @@ export default class ManagerRegisters {
   }
 
   processResponse(registers: TypeRegisterToUpdate[]): void {
+    for (const registerToUpdate of registers) {
+      const { typeRegister, register, hexadecimalValue } = registerToUpdate;
 
+      switch (typeRegister) {
+        case "Control": {
+          const binary = Utils.hexadecimalToBinary(hexadecimalValue);
+          this[register as TypeRegisterControl] = new Int32();
+          this[register as TypeRegisterControl].binary = binary;
+          break;
+        }
+        case "Integer": {
+          const binary = Utils.hexadecimalToBinary(hexadecimalValue);
+          const index = Utils.getRegisterNumber(register);
+          this.R[index] = new Int32();
+          this.R[index].binary = binary;
+          break;
+        }
+        case "Float": {
+          const binary = Utils.hexadecimalToBinary(hexadecimalValue);
+          const index = Utils.getRegisterNumber(register);
+          this.F[index] = new Float32();
+          this.F[index].binary = binary;
+          break;
+        }
+        case "Double": {
+          const binary = Utils.hexadecimalToBinary(hexadecimalValue);
+          const index = Utils.getRegisterNumber(register);
+          this.F[index] = new Float32();
+          this.F[index + 1] = new Float32();
+          this.F[index].binary = binary.substr(0, 32);
+          this.F[index + 1].binary = binary.substr(32, 32);
+          break;
+        }
+        default: {
+          console.warn("Can't process register %s, %s, %s", typeRegister, register, hexadecimalValue);
+          break;
+        }
+      }
+    }
   }
 }

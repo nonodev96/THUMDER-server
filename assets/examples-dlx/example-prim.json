@@ -4,6 +4,7 @@
   "date": "2021-08-28T10:25:00.000Z",
   "canSimulate": true,
   "lines": 68,
+  "errors": [],
   "machineDirectives": [
     {
       "address": "0x00000000",

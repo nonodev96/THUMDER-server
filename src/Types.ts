@@ -1,3 +1,19 @@
+// eslint-disable-next-line no-shadow
+export enum EnumSeverity {
+  Hint = 1,
+  Info = 2,
+  Warning = 4,
+  Error = 8
+}
+
+export type TypeLine = number;
+
+export type TypeErrorInCode = {
+  line: number;
+  message: string;
+  severity: EnumSeverity;
+}
+
 export type TypeAddress = string;
 export type TypeTagLabel = string;
 
@@ -77,7 +93,7 @@ export type TypeAddressDirectiveLabelData = {
   address?: TypeAddress;
   label?: string;
   data?: number[] | string[];
-  text?:string;
+  text?: string;
 }
 
 export type TypeAddressDirectiveNameData = {
@@ -380,6 +396,23 @@ export type TypeAllRegisters = {
   }[];
 };
 
+export type TypeConfigurationMachine = {
+  addition: {
+    count: number;
+    delay: number;
+  },
+  multiplication: {
+    count: number;
+    delay: number;
+  },
+  division: {
+    count: number;
+    delay: number;
+  },
+  memorySize: number;
+  enabledForwarding: boolean;
+};
+
 export type TypeInstructionsData = {
   text?: string;
   address: string; // 0x00000000
@@ -442,11 +475,19 @@ export type TypeRegisterToUpdate = {
   register: string; // TypeRegisterControl & number [0-31]
   hexadecimalValue: string; // hexadecimal 0x00000000
 };
+export type TypeRegisterToUpdateResponse = {
+  allOK: boolean,
+  registerToUpdates: TypeRegisterToUpdate[]
+};
 
 export type TypeMemoryToUpdate = {
   typeData: TypeData;
   address: string;
   value: string;
+};
+export type TypeMemoryToUpdateResponse = {
+  allOK: boolean,
+  memoryToUpdates: TypeMemoryToUpdate[]
 };
 
 export type TypeArrowCycle = {
@@ -454,6 +495,7 @@ export type TypeArrowCycle = {
   fromStep: number;
   toAddressRow: number;
   toStep: number;
+  color: number; // hexadecimal 0xff00ff
 };
 
 export type TypeStall = "Aborted" | "R-Stall" | "T-Stall" | "W-Stall" | "S-Stall" | "Stall";
@@ -515,8 +557,16 @@ export type TypeSimulationInitRequest = {
   date: string;
   content: string;
 
+  breakpoints: TypeLine[];
   registers: TypeRegisterToUpdate[];
   memory: TypeMemoryToUpdate[];
+};
+
+export type TypeDirectiveData = {
+  address: TypeAddress;
+  directive: TypeDirective;
+  text: string;
+  hexValue: string;
 };
 
 export type TypeSimulationInitResponse = {
@@ -525,7 +575,9 @@ export type TypeSimulationInitResponse = {
   date: string;
   lines: number;
   canSimulate: boolean;
+  errors: TypeErrorInCode[];
 
+  machineDirectives: TypeDirectiveData[];
   machineInstructions: TypeInstructionsData[];
   runner: TypeSimulationStep[];
 };

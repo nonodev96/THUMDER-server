@@ -187,7 +187,7 @@ export default class ManagerMemory {
   }
 
   // 0          1          2          3
-  // 00000000 - 00000000 - 00000000 - 00000000
+  // 00000000 - 00000000 - 00000000 - 00000000-
   // Page code.view
   public getAllMemoryWord(): Int32[] {
     const list = [];
@@ -216,14 +216,40 @@ export default class ManagerMemory {
     this._memoryInt8Array = new Uint8Array(this._memorySizeBytes + 8);
   }
 
-  processResponse(memory: TypeMemoryToUpdate[]): void {
-    for (const memoryToUpdate of memory) {
-      switch (memoryToUpdate.typeData) {
+  processResponse(memoryToUpdates: TypeMemoryToUpdate[]): void {
+    for (const memoryToUpdate of memoryToUpdates) {
+      const { typeData, address, value } = memoryToUpdate;
+      switch (typeData) {
         case "Byte": {
-          this.setMemoryByteBinaryByAddress(memoryToUpdate.address, memoryToUpdate.value);
+          const binary = Utils.hexadecimalToBinary(value);
+          this.setMemoryByteBinaryByAddress(address, binary);
+          break;
+        }
+        case "HalfWord": {
+          const binary = Utils.hexadecimalToBinary(value);
+          this.setMemoryHalfWordBinaryByAddress(address, binary);
+          break;
+        }
+        case "Word": {
+          const binary = Utils.hexadecimalToBinary(value);
+          this.setMemoryWordBinaryByAddress(address, binary);
+          break;
+        }
+        case "Float": {
+          const binary = Utils.hexadecimalToBinary(value);
+          this.setMemoryFloatBinaryByAddress(address, binary);
+          break;
+        }
+        case "Double": {
+          const binary = Utils.hexadecimalToBinary(value);
+          this.setMemoryDoubleBinaryByAddress(address, binary);
+          break;
+        }
+        case "ASCII": {
           break;
         }
         default: {
+          console.warn("Can't process memory", typeData, address, value);
           break;
         }
       }

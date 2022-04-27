@@ -5,34 +5,30 @@ import {
   TypeAddress,
   TypeAllMemory,
   TypeAllRegisters,
-  TypeInstructionsData, TypeCycleCell,
+  TypeConfigurationMachine,
   TypeDataStatistics,
-  TypeFloatingPointConfiguration,
-  TypeMemoryToUpdate,
+  TypeDirectiveData,
+  TypeErrorInCode,
+  TypeInstructionsData,
+  TypeMemoryToUpdate, TypeMemoryToUpdateResponse,
   TypeRegister,
   TypeRegisterControl,
-  TypeRegisterToUpdate,
+  TypeRegisterToUpdate, TypeRegisterToUpdateResponse,
   TypeSimulationInitRequest,
   TypeSimulationInitResponse,
-  TypeSimulationStep, TypeTagLabel,
+  TypeSimulationStep,
+  TypeTagLabel,
 } from "./Types";
 import ManagerMemory from "./DLX/ManagerMemory";
 import ManagerRegisters from "./DLX/ManagerRegisters";
 import { Utils } from "./Utils";
 import { Float32, Int32 } from "./DLX/TypeData";
-import {
-  DEFAULT_SIMULATION_STEP_VOID,
-  RegexRegisterControl,
-  RegexRegisterDouble,
-  RegexRegisterFloat,
-  RegexRegisterInteger,
-  REGISTERS_OF_CONTROL
-} from "./CONSTANTS";
+import { DEFAULT_SIMULATION_STEP_VOID, RegexRegisterControl, RegexRegisterDouble, RegexRegisterFloat, RegexRegisterInteger, REGISTERS_OF_CONTROL } from "./CONSTANTS";
 
 export default class Machine {
   private content: string;
 
-  private configuration: TypeFloatingPointConfiguration;
+  private configuration: TypeConfigurationMachine;
 
   private memory: ManagerMemory;
 
@@ -53,18 +49,20 @@ export default class Machine {
     this.privateStep = 0;
     this.privateLine = 0;
     this.configuration = {
-      addition:       {
+      addition:          {
         count: 1,
         delay: 1,
       },
-      multiplication: {
+      multiplication:    {
         count: 1,
         delay: 1,
       },
-      division:       {
+      division:          {
         count: 1,
         delay: 1,
       },
+      memorySize:        32768,
+      enabledForwarding: true
     };
     this.registers = new ManagerRegisters();
     this.memory = new ManagerMemory(512);
@@ -123,23 +121,39 @@ export default class Machine {
     const runner: TypeSimulationStep[] = [
       DEFAULT_SIMULATION_STEP_VOID
     ];
+
+
+    let errors: TypeErrorInCode[] = [];
+    let machineDirectives: TypeDirectiveData[] = []
+
     runner[0].registers[0] = {
-      "typeRegister":     "Control",
-      "register":         "PC",
-      "hexadecimalValue": "0x00000100"
+      typeRegister:     "Control",
+      register:         "PC",
+      hexadecimalValue: "0x00000100"
     };
-
-
+    if (filename === 'prim.s') {
+      errors = [
+        { line: 10, message: "Error X", severity: 8 },
+        { line: 12, message: "Error Y", severity: 4 }
+      ];
+      machineDirectives = [{
+        address:   "0x00000000",
+        directive: "WORD",
+        hexValue:  "0x0000000A",
+        text:      "COUNT",
+      }];
+    }
     return {
       id:                  id,
       filename:            filename,
       date:                new Date(date).toISOString(),
       canSimulate:         true,
       lines:               content.split("\n").length,
-      machineDirectives:   [],
+      errors:              errors,
+      machineDirectives:   machineDirectives,
       machineInstructions: machineInstructions,
       runner:              runner,
-    } as TypeSimulationInitResponse;
+    };
   }
 
   public simulationNextStep(): TypeSimulationStep {
@@ -151,12 +165,16 @@ export default class Machine {
     return status;
   }
 
-  public updateConfigurationMachine(configuration: TypeFloatingPointConfiguration): boolean {
+  public updateConfigurationMachine(configuration: TypeConfigurationMachine): boolean {
     this.configuration = configuration;
     return true;
   }
 
-  public updateMemory(memoryToUpdates: TypeMemoryToUpdate[]): boolean {
+  public updateMemory(memoryToUpdates: TypeMemoryToUpdate[]): TypeMemoryToUpdateResponse {
+    const response: TypeMemoryToUpdateResponse = {
+      allOK:           true,
+      memoryToUpdates: []
+    };
     for (const memory_value of memoryToUpdates) {
       const { typeData, address, value } = memory_value;
       switch (typeData) {
@@ -166,6 +184,11 @@ export default class Machine {
             fillString: "0",
           });
           this.memory.setMemoryByteBinaryByAddress(address, binary);
+          response.memoryToUpdates.push({
+            typeData: "Byte",
+            address:  address,
+            value:    value
+          });
           break;
         }
         case "HalfWord": {
@@ -174,6 +197,11 @@ export default class Machine {
             fillString: "0",
           });
           this.memory.setMemoryHalfWordBinaryByAddress(address, binary);
+          response.memoryToUpdates.push({
+            typeData: "HalfWord",
+            address:  address,
+            value:    value
+          });
           break;
         }
         case "Word": {
@@ -182,6 +210,11 @@ export default class Machine {
             fillString: "0",
           });
           this.memory.setMemoryWordBinaryByAddress(address, binary);
+          response.memoryToUpdates.push({
+            typeData: "Word",
+            address:  address,
+            value:    value
+          });
           break;
         }
         case "Float": {
@@ -190,6 +223,11 @@ export default class Machine {
             fillString: "0",
           });
           this.memory.setMemoryFloatBinaryByAddress(address, binary);
+          response.memoryToUpdates.push({
+            typeData: "Float",
+            address:  address,
+            value:    value
+          });
           break;
         }
         case "Double": {
@@ -198,55 +236,62 @@ export default class Machine {
             fillString: "0",
           });
           this.memory.setMemoryDoubleBinaryByAddress(address, binary);
+          response.memoryToUpdates.push({
+            typeData: "Double",
+            address:  address,
+            value:    value
+          });
           break;
         }
         default: {
           console.log("Default memory", typeData, address, value);
+          response.allOK = false;
           break;
         }
       }
     }
-    return true;
+    return response;
   }
 
-  public updateRegisters(registerToUpdates: TypeRegisterToUpdate[]): TypeRegisterToUpdate[] {
+  public updateRegisters(registerToUpdates: TypeRegisterToUpdate[]): TypeRegisterToUpdateResponse {
+    const response: TypeRegisterToUpdateResponse = {
+      allOK:             true,
+      registerToUpdates: []
+    }
     for (const register_value of registerToUpdates) {
       const { register, typeRegister, hexadecimalValue } = register_value;
       switch (typeRegister) {
         case "Control": {
           const binary = Utils.hexadecimalToBinary(register_value.hexadecimalValue);
           this.registers.setControl(register as TypeRegisterControl, binary);
-          return [
-            {
-              typeRegister:     "Control",
-              register:         register,
-              hexadecimalValue: hexadecimalValue,
-            },
-          ];
+          response.registerToUpdates.push({
+            typeRegister:     "Control",
+            register:         register,
+            hexadecimalValue: hexadecimalValue,
+          });
+          break;
         }
         case "Integer": {
           const r: number = Machine.getRegisterNumber(register);
           this.registers.R[r] = new Int32();
           this.registers.R[r].binary = Utils.hexadecimalToBinary(hexadecimalValue);
-          return [
-            {
-              typeRegister:     "Integer",
-              register:         register,
-              hexadecimalValue: Utils.binaryToHexadecimal(this.registers.R[r].binary),
-            },
-          ];
+          response.registerToUpdates.push({
+            typeRegister:     "Integer",
+            register:         register,
+            hexadecimalValue: Utils.binaryToHexadecimal(this.registers.R[r].binary),
+          });
+          break;
         }
         case "Float": {
           const f: number = Machine.getRegisterNumber(register);
           this.registers.F[f] = new Float32();
           this.registers.F[f].binary = Utils.hexadecimalToBinary(hexadecimalValue);
-          return [
-            {
-              typeRegister:     "Float",
-              register:         register,
-              hexadecimalValue: Utils.binaryToHexadecimal(this.registers.F[f].binary),
-            },
-          ];
+          response.registerToUpdates.push({
+            typeRegister:     "Float",
+            register:         register,
+            hexadecimalValue: Utils.binaryToHexadecimal(this.registers.F[f].binary),
+          });
+          break;
         }
         case "Double": {
           const d: number = Machine.getRegisterNumber(register);
@@ -257,26 +302,26 @@ export default class Machine {
           this.registers.F[d] = new Float32();
           this.registers.F[d].binary = binary.substr(0, 32);
           this.registers.F[d + 1].binary = binary.substr(32, 32);
-          return [
-            {
-              typeRegister:     "Double",
-              register:         "F" + d,
-              hexadecimalValue: Utils.binaryToHexadecimal(this.registers.F[d].binary),
-            },
-            {
-              typeRegister:     "Double",
-              register:         "F" + (d + 1),
-              hexadecimalValue: Utils.binaryToHexadecimal(this.registers.F[d + 1].binary),
-            },
-          ];
+          response.registerToUpdates.push({
+            typeRegister:     "Double",
+            register:         "F" + d,
+            hexadecimalValue: Utils.binaryToHexadecimal(this.registers.F[d].binary),
+          });
+          response.registerToUpdates.push({
+            typeRegister:     "Double",
+            register:         "F" + (d + 1),
+            hexadecimalValue: Utils.binaryToHexadecimal(this.registers.F[d + 1].binary),
+          },);
+          break;
         }
         default: {
           console.log("Default register", typeRegister, register, hexadecimalValue);
+          response.allOK = false;
           break;
         }
       }
     }
-    throw new Error("Can't update a register");
+    return response;
   }
 
   public getAllRegisters(): TypeAllRegisters {
