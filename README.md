@@ -125,6 +125,10 @@ Fallos detectados:
 
 ## TEST prim.s
 
+```bash
+npx jest -i '_all.spec.ts' --coverage --silent
+```
+
 ```test
 Error: expect(received).toBe(expected) // Object.is equality
 

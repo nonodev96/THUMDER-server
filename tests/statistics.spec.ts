@@ -1,12 +1,12 @@
 import { Server } from "socket.io";
 import { io } from "socket.io-client";
 
-import { startWebSocketServer } from "../dist/main";
 import {
   TypeSimulationInitRequest,
   TypeDataStatistics
 } from "../dist/Types";
 import { Utils } from "../dist/Utils";
+import { startWebSocketServer } from "../dist/main";
 
 describe("Statistics", () => {
   let server: Server;

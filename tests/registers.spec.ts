@@ -1,13 +1,13 @@
 import { Server } from "socket.io";
 import { io } from "socket.io-client";
 
-import { startWebSocketServer } from "../dist/main";
 import {
   TypeSimulationInitRequest,
   TypeRegisterToUpdate,
   TypeRegisterToUpdateResponse, TypeAllRegisters
 } from "../dist/Types";
 import { Utils } from "../dist/Utils";
+import { startWebSocketServer } from "../dist/main";
 
 describe("Registers", () => {
   let server: Server;
@@ -57,7 +57,6 @@ describe("Registers", () => {
       // client.close();
     }
   });
-
 
   test("Get all registers", (done) => {
     const client = io("ws://localhost:3003");

@@ -1,13 +1,13 @@
 import { Server } from "socket.io";
 import { io } from "socket.io-client";
 
-import { startWebSocketServer } from "../dist/main";
 import {
   TypeMemoryToUpdateResponse,
   TypeMemoryToUpdate,
   TypeSimulationInitRequest
 } from "../dist/Types";
 import { Utils } from "../dist/Utils";
+import { startWebSocketServer } from "../dist/main";
 
 describe("Memory", () => {
   let server: Server;
@@ -70,7 +70,6 @@ describe("Memory", () => {
       // client.close();
     }
   });
-
 
   test("Get all memory", (done) => {
     const client = io("ws://localhost:3002");

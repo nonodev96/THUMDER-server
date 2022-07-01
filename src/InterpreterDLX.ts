@@ -20,10 +20,6 @@ export default class InterpreterDLX {
     this.machineInstructions = new Map<TypeAddress, TypeInstructionsData>();
   }
 
-  public getContent(): string {
-    return this.content;
-  }
-
   public analyze(): void {
     const linesDirectivesAndTags: string[] = Utils.getLinesDirectivesAndTags(this.content);
     this.interpreterDirectives(linesDirectivesAndTags);

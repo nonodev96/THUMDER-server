@@ -75,15 +75,12 @@ export default class Machine {
     this.privateLine = 0;
     this.registers.reset();
     this.memory.reset();
+    this.content = "";
     this.registers.PC.hexadecimal = "0x00000100";
   }
 
   public getMemory() {
     return this.memory;
-  }
-
-  public setContent(content: string) {
-    this.content = content;
   }
 
   public getMachineMemoryDirectivesTagsCode(content: string) {
@@ -165,9 +162,9 @@ export default class Machine {
     return status;
   }
 
-  public updateConfigurationMachine(configuration: TypeConfigurationMachine): boolean {
+  public updateConfigurationMachine(configuration: TypeConfigurationMachine): TypeConfigurationMachine {
     this.configuration = configuration;
-    return true;
+    return this.configuration;
   }
 
   public updateMemory(memoryToUpdates: TypeMemoryToUpdate[]): TypeMemoryToUpdateResponse {
@@ -177,6 +174,8 @@ export default class Machine {
     };
     for (const memory_value of memoryToUpdates) {
       const { typeData, address, value } = memory_value;
+      this.memory.processResponse([memory_value]);
+
       switch (typeData) {
         case "Byte": {
           const binary = Utils.hexadecimalToBinary(value, {
