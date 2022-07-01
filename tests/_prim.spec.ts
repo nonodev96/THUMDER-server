@@ -5,10 +5,10 @@ import {
   TypeSimulationInitRequest,
   TypeSimulationInitResponse,
   TypeSimulationStep
-} from "../dist/Types";
-import { Utils } from "../dist/Utils";
-import { UtilsTests } from "../dist/UtilsTests";
-import { startWebSocketServer } from "../dist/main";
+} from "../src/Types";
+import { Utils } from "../src/Utils";
+import { UtilsTests } from "../src/UtilsTests";
+import { startWebSocketServer } from "../src/main";
 
 
 describe("PRIM.S CODE", () => {

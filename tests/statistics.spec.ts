@@ -4,9 +4,9 @@ import { io } from "socket.io-client";
 import {
   TypeSimulationInitRequest,
   TypeDataStatistics
-} from "../dist/Types";
-import { Utils } from "../dist/Utils";
-import { startWebSocketServer } from "../dist/main";
+} from "../src/Types";
+import { Utils } from "../src/Utils";
+import { startWebSocketServer } from "../src/main";
 
 describe("Statistics", () => {
   let server: Server;

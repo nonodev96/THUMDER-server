@@ -10,12 +10,13 @@ import {
   TypeMemoryToUpdateResponse,
   TypeRegisterToUpdate,
   TypeRegisterToUpdateResponse,
-  TypeAllRegisters
-} from "../dist/Types";
-import { Utils } from "../dist/Utils";
-import { UtilsTests } from "../dist/UtilsTests";
-import { startWebSocketServer } from "../dist/main";
-import { TypeConfigurationMachine } from "../src/Types";
+  TypeAllRegisters,
+  TypeConfigurationMachine
+} from "../src/Types";
+import { Utils } from "../src/Utils";
+import { UtilsTests } from "../src/UtilsTests";
+import { startWebSocketServer } from "../src/main";
+
 
 describe("All", () => {
   let server: Server;

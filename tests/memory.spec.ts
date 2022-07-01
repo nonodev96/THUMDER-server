@@ -5,9 +5,9 @@ import {
   TypeMemoryToUpdateResponse,
   TypeMemoryToUpdate,
   TypeSimulationInitRequest
-} from "../dist/Types";
-import { Utils } from "../dist/Utils";
-import { startWebSocketServer } from "../dist/main";
+} from "../src/Types";
+import { Utils } from "../src/Utils";
+import { startWebSocketServer } from "../src/main";
 
 describe("Memory", () => {
   let server: Server;

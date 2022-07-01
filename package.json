@@ -25,6 +25,7 @@
     "dist/"
   ],
   "scripts": {
+    "build": "tsc --project tsconfig.json",
     "dev": "tsc -w --project tsconfig.json & nodemon -q -w dist dist/main.js --startWebSocketServer",
     "start": "node dist/main.js --startWebSocketServer",
     "test": "jest",
