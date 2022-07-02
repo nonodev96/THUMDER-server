@@ -413,11 +413,23 @@ export type TypeConfigurationMachine = {
   enabledForwarding: boolean;
 };
 
+export type TypeDirectiveData = {
+  address: TypeAddress;
+  hexValue: string;
+  text: string;
+  directive: TypeDirective;
+};
+
 export type TypeInstructionsData = {
+  address: TypeAddress; // 0x00000000
+  code: string;         // 0x00000000
   text?: string;
-  address: string; // 0x00000000
-  instruction: string; // 0x00000000
-  code: string; // 0x00000000
+  instruction: string;  // 0x00000000
+};
+
+export type TypeCodeResponse = {
+  machineDirectives: TypeDirectiveData[],
+  machineInstructions: TypeInstructionsData[],
 };
 
 export type TypeInstructionsData_Table = TypeInstructionsData & {
@@ -560,13 +572,6 @@ export type TypeSimulationInitRequest = {
   breakpoints: TypeLine[];
   registers: TypeRegisterToUpdate[];
   memory: TypeMemoryToUpdate[];
-};
-
-export type TypeDirectiveData = {
-  address: TypeAddress;
-  directive: TypeDirective;
-  text: string;
-  hexValue: string;
 };
 
 export type TypeSimulationInitResponse = {

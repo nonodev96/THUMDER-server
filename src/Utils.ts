@@ -14,60 +14,60 @@ import { REGEX_TYPE_DIRECTIVE, REGEX_TYPE_DIRECTIVE_VECTOR, REGEX_TYPE_LOAD_PARS
 // (bit0-2)(bit3-5)
 const OPCODES_TYPE_I_J = [
   // { bits: '000000', name: '(RR ALU)'  },
-  { opcode: '001000', name: 'ADDI' },
-  { opcode: '010000', name: 'RFE' },
-  { opcode: '011000', name: 'SEQI' },
-  { opcode: '100000', name: 'LB' },
-  { opcode: '101000', name: 'SB' },
+  { opcode: "001000", name: "ADDI" },
+  { opcode: "010000", name: "RFE" },
+  { opcode: "011000", name: "SEQI" },
+  { opcode: "100000", name: "LB" },
+  { opcode: "101000", name: "SB" },
 
   // { opcode: '000001', name: '(FLOAT)'   },
-  { opcode: '001001', name: 'ADDUI' },
-  { opcode: '010001', name: 'TRAP' },
-  { opcode: '011001', name: 'SNEI' },
-  { opcode: '100001', name: 'LH' },
-  { opcode: '101001', name: 'SH' },
+  { opcode: "001001", name: "ADDUI" },
+  { opcode: "010001", name: "TRAP" },
+  { opcode: "011001", name: "SNEI" },
+  { opcode: "100001", name: "LH" },
+  { opcode: "101001", name: "SH" },
 
-  { opcode: '000010', name: 'J' },
-  { opcode: '000011', name: 'JAL' },
-  { opcode: '001010', name: 'SUBI' },
-  { opcode: '010010', name: 'JR' },
+  { opcode: "000010", name: "J" },
+  { opcode: "000011", name: "JAL" },
+  { opcode: "001010", name: "SUBI" },
+  { opcode: "010010", name: "JR" },
 
-  { opcode: '011010', name: 'SLTI' },
-  { opcode: '001011', name: 'SUBUI' },
-  { opcode: '010011', name: 'JALR' },
-  { opcode: '011011', name: 'SGTI' },
-  { opcode: '100011', name: 'LW' },
-  { opcode: '101011', name: 'SW' },
+  { opcode: "011010", name: "SLTI" },
+  { opcode: "001011", name: "SUBUI" },
+  { opcode: "010011", name: "JALR" },
+  { opcode: "011011", name: "SGTI" },
+  { opcode: "100011", name: "LW" },
+  { opcode: "101011", name: "SW" },
 
-  { opcode: '000100', name: 'BEQZ' },
-  { opcode: '001100', name: 'ANDI' },
-  { opcode: '010100', name: 'SLLI' },
-  { opcode: '011100', name: 'SLEI' },
-  { opcode: '100100', name: 'LBU' },
+  { opcode: "000100", name: "BEQZ" },
+  { opcode: "001100", name: "ANDI" },
+  { opcode: "010100", name: "SLLI" },
+  { opcode: "011100", name: "SLEI" },
+  { opcode: "100100", name: "LBU" },
 
-  { opcode: '000101', name: 'BNEZ' },
-  { opcode: '001101', name: 'ORI' },
-  { opcode: '011101', name: 'SGEI' },
-  { opcode: '100101', name: 'LHU' },
+  { opcode: "000101", name: "BNEZ" },
+  { opcode: "001101", name: "ORI" },
+  { opcode: "011101", name: "SGEI" },
+  { opcode: "100101", name: "LHU" },
 
-  { opcode: '000110', name: 'BFPT' },
-  { opcode: '001110', name: 'XORI' },
+  { opcode: "000110", name: "BFPT" },
+  { opcode: "001110", name: "XORI" },
   // { opcode: '010110', name: 'SRLI' },
-  { opcode: '100110', name: 'LF' },
-  { opcode: '101110', name: 'SF' },
+  { opcode: "100110", name: "LF" },
+  { opcode: "101110", name: "SF" },
 
-  { opcode: '000111', name: 'BFPF' },
-  { opcode: '001111', name: 'LHI' },
+  { opcode: "000111", name: "BFPF" },
+  { opcode: "001111", name: "LHI" },
   // { opcode: '010111', name: 'SRAI' },
-  { opcode: '100111', name: 'LD' },
-  { opcode: '101111', name: 'SD' },
+  { opcode: "100111", name: "LD" },
+  { opcode: "101111", name: "SD" }
 ];
 // DLX R-R ALU instructions (opcode = 0):
 // only the least-significant 6 bits in the function field are used.
 // (bit26-28)(bit29-31)
 const OPCODES_TYPE_R_OPCODE_0 = [
-  { operation: '000010', name: 'SRLI' },
-  { operation: '000011', name: 'SRAI' },
+  { operation: "000010", name: "SRLI" },
+  { operation: "000011", name: "SRAI" },
   { operation: "000100", name: "SLL" },
   { operation: "000110", name: "SRL" },
   { operation: "000111", name: "SRA" },
@@ -97,7 +97,7 @@ const OPCODES_TYPE_R_OPCODE_0 = [
   { operation: "011000", name: "MULT" },
   { operation: "011001", name: "MULTU" },
   { operation: "011010", name: "DIV" },
-  { operation: "011011", name: "DIVU" },
+  { operation: "011011", name: "DIVU" }
 ];
 // DLX floating-poing instructions (opcode = 1):
 // only the least-significant 6 bits in the function field are used.
@@ -130,7 +130,7 @@ const OPCODES_TYPE_R_OPCODE_1 = [
   { operation: "011010", name: "LTD" },
   { operation: "011011", name: "GTD" },
   { operation: "011100", name: "LED" },
-  { operation: "011101", name: "GED" },
+  { operation: "011101", name: "GED" }
 ];
 /* @formatter:on */
 
@@ -159,6 +159,11 @@ export namespace Utils {
     return (decimal).toString(2).padStart(args.maxLength, args.fillString);
   }
 
+  export function transform_directive_DataToHexValue(data?: number[] | string[]): string {
+    // const sToTransform: string[] = data?.toString().split(",");
+
+    return "0x00000000";
+  }
 
   export function readFileContents(path: string): string {
     return fs.readFileSync(path, "utf8");
@@ -291,7 +296,8 @@ export namespace Utils {
         // Type J
         if (Array.from(addressLabel.values()).some((v) => v.label === textParser[1])) {
           const { addressTagLabel } = [...addressLabel.values()].filter(v => v.label === textParser[1])[0];
-          if (["J", "JAL"].includes(code.name)) {
+          if (["J",
+            "JAL"].includes(code.name)) {
             const p0 = parseInt(addressTagLabel, 16);
             const p1 = parseInt(addressPC, 16);
             const countAddressJump = ((p0 - p1) - 4);
@@ -301,7 +307,8 @@ export namespace Utils {
             // console.debug(binary, `0x${resultHex}`, textParser, `${code.opcode} |  ${binaryJump}`);
             return resultHex;
           }
-          if (["BFPT", "BFPF"].includes(code.name)) {
+          if (["BFPT",
+            "BFPF"].includes(code.name)) {
             const binary = `${code.opcode}${binaryAddressTagLabel}`;
             const resultHex = parseInt(binary, 2).toString(16).padStart(8, "0").toUpperCase();
             // console.debug(binary, `0x${resultHex}`, textParser, `${code.opcode} |  ${binaryAddressTagLabel}`);
@@ -311,7 +318,8 @@ export namespace Utils {
         }
         if (Array.from(addressLabel.values()).some((v) => v.label === textParser[2])) {
           // Ex: beqz r1,label
-          if (["BEQZ", "BNEZ"].includes(code.name)) {
+          if (["BEQZ",
+            "BNEZ"].includes(code.name)) {
             const binaryRNum = parseInt(textParser[1].slice(1), 10).toString(2).padStart(5, "0");
             const binaryNull5 = "".padStart(5, "0");
             const o = Array.from(addressLabel.values()).filter((v) => {
@@ -329,7 +337,13 @@ export namespace Utils {
           }
           return "HexCodeError # {BEQZ, BNEZ}";
         }
-        if (["LB", "LH", "LW", "LBU", "LHU", "LF", "LD"].includes(nameInstruction)) {
+        if (["LB",
+          "LH",
+          "LW",
+          "LBU",
+          "LHU",
+          "LF",
+          "LD"].includes(nameInstruction)) {
           const { groups } = _instruction.match(REGEX_TYPE_LOAD_PARSER) as RegExpMatchArray;
           const _groups = groups as { [text: string]: string };
           // const typeLoad = _groups.TypeLoad;
@@ -352,7 +366,9 @@ export namespace Utils {
           // console.debug(binary, resultHex);
           return resultHex;
         }
-        if (["SW", "SF", "SD"].includes(nameInstruction)) {
+        if (["SW",
+          "SF",
+          "SD"].includes(nameInstruction)) {
           const { groups } = _instruction.match(REGEX_TYPE_LOAD_PARSER) as RegExpMatchArray;
           const _groups = groups as { [text: string]: string };
           const register0Index = _groups.Register0Index_ || _groups.Register0Index;
@@ -460,7 +476,15 @@ export namespace Utils {
         if (instructionTypeR_opcode_0) {
           const instruction_name = instructionTypeR_opcode_0.name;
           // Type R with opcode = 0
-          if (["SLLI", "SRLI", "SRAI", "SEQI", "SNEI", "SLTI", "SGTI", "SLEI", "SGEI"].includes(instruction_name)) {
+          if (["SLLI",
+            "SRLI",
+            "SRAI",
+            "SEQI",
+            "SNEI",
+            "SLTI",
+            "SGTI",
+            "SLEI",
+            "SGEI"].includes(instruction_name)) {
             return `${instruction_name} R${rX}, R${rY}, ${"0x" + rZ.toString(16).toUpperCase()}`;
           }
           return `${instruction_name} R${rd0}, R${rs1}, R${rs2}`;
@@ -494,8 +518,13 @@ export namespace Utils {
           const instruction_name = obj_instruction_type_i_or_j.name;
           // Type I or type J
           const isTypeIorJ = [
-            "ADDI", "ADDUI", "SUBI", "SUBUI",
-            "ANDI", "ORI", "XORI",].includes(instruction_name);
+            "ADDI",
+            "ADDUI",
+            "SUBI",
+            "SUBUI",
+            "ANDI",
+            "ORI",
+            "XORI"].includes(instruction_name);
           if (isTypeIorJ) {
             return `${instruction_name} R${rd0I}, R${rs1I}, ${"0x" + d_data_16b.toString(16).toUpperCase()}`;
           }
@@ -504,7 +533,8 @@ export namespace Utils {
           }
 
           // Type J
-          if (["J", "JAL"].includes(instruction_name)) {
+          if (["J",
+            "JAL"].includes(instruction_name)) {
             const b_complement = Utils.twosComplement(-d_data_26b, 26);
             const d_complement = parseInt(b_complement, 2);
             const d_tagAddress = parseInt(h_addressPC, 16);
@@ -513,7 +543,8 @@ export namespace Utils {
             const tagLabel = objectTag !== undefined ? objectTag.label : "_ERROR_";
             return `${instruction_name} ${tagLabel}`;
           }
-          if (["BEQZ", "BNEZ"].includes(instruction_name)) {
+          if (["BEQZ",
+            "BNEZ"].includes(instruction_name)) {
             const d_index_AddressToJump = d_data_16b;
             const d_index_AddressPC = parseInt(`0x${h_addressPC}`, 16);
             const h_addressToJump = ((d_index_AddressPC + d_index_AddressToJump + 4)).toString(16).padStart(8, "0").toUpperCase();
@@ -521,7 +552,8 @@ export namespace Utils {
             const tagLabel = objectTag !== undefined ? objectTag.label : "_ERROR_";
             return `${instruction_name} R${rs1I}, ${tagLabel}`;
           }
-          if (["BFPT", "BFPF"].includes(instruction_name)) {
+          if (["BFPT",
+            "BFPF"].includes(instruction_name)) {
             return `${instruction_name} ${"0x" + d_data_16b}`;
           }
           if (instruction_name === "RFE") {
@@ -532,29 +564,38 @@ export namespace Utils {
           }
 
           // No se de que tipo son :3 supongamos que de tipo I
-          if (["JR", "JALR"].includes(instruction_name)) {
+          if (["JR",
+            "JALR"].includes(instruction_name)) {
             return `${instruction_name} R${rs1I}`;
           }
 
-          if (["LB", "LH", "LW", "LBU", "LHU"].includes(instruction_name)) {
+          if (["LB",
+            "LH",
+            "LW",
+            "LBU",
+            "LHU"].includes(instruction_name)) {
             const _addressLabel = `0x${d_data_16b.toString(16).padStart(8, "0").toUpperCase()}`;
             const _directive = [...addressDirectiveLabelData.values()].filter((v) => v.address === _addressLabel);
             const _label = _directive[0].label ?? "";
             return `${instruction_name} R${rd0I}, ${_label}(R${rs1I})`;
           }
-          if (["LF", "LD"].includes(instruction_name)) {
+          if (["LF",
+            "LD"].includes(instruction_name)) {
             const _addressLabel = `0x${d_data_16b.toString(16).padStart(8, "0").toUpperCase()}`;
             const _directive = [...addressDirectiveLabelData.values()].filter((v) => v.address === _addressLabel);
             const _label = _directive[0].label ?? "";
             return `${instruction_name} F${rd0I}, ${_label}(R${rs1I})`;
           }
 
-          if (["SW", "SB", "SH"].includes(instruction_name)) {
+          if (["SW",
+            "SB",
+            "SH"].includes(instruction_name)) {
             const _addressLabel = `0x${d_data_16b.toString(16).padStart(8, "0").toUpperCase()}`;
             const _directive = [...addressDirectiveLabelData.values()].filter((v) => v.address === _addressLabel);
             return `${instruction_name} ${_directive[0]?.label ?? ""}(R${rs1I}), R${rd0I}`;
           }
-          if (["SF", "SD"].includes(instruction_name)) {
+          if (["SF",
+            "SD"].includes(instruction_name)) {
             return `${instruction_name} #${d_data_16b}(R${rs1I}), F${rd0I}`;
           }
         }

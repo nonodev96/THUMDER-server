@@ -1,6 +1,6 @@
 import { Table } from "console-table-printer";
 import { Utils } from "./Utils";
-import { TypeAddress, TypeInstructionsData, TypeAddressLabel, TypeAddressDirectiveLabelData, TypeAllMemoryAddressBinary } from "./Types";
+import { TypeAddress, TypeInstructionsData, TypeAddressLabel, TypeAddressDirectiveLabelData, TypeAllMemoryAddressBinary, TypeDirectiveData } from "./Types";
 import { REGEX_GLOBAL_DIRECTIVE, REGEX_TAG_LABEL } from "./CONSTANTS";
 import ManagerMemory from "./DLX/ManagerMemory";
 
@@ -11,6 +11,7 @@ export default class InterpreterDLX {
   private readonly addressLabel: Map<TypeAddress, TypeAddressLabel>;
   private readonly memory: ManagerMemory;
   private readonly machineInstructions: Map<TypeAddress, TypeInstructionsData>;
+  private readonly machineDirectives: Map<TypeAddress, TypeDirectiveData>;
 
   constructor(content: string, memory: ManagerMemory) {
     this.content = content;
@@ -18,6 +19,7 @@ export default class InterpreterDLX {
     this.addressDirectiveLabelData = new Map<TypeAddress, TypeAddressDirectiveLabelData>();
     this.addressLabel = new Map<TypeAddress, TypeAddressLabel>();
     this.machineInstructions = new Map<TypeAddress, TypeInstructionsData>();
+    this.machineDirectives = new Map<TypeAddress, TypeDirectiveData>();
   }
 
   public analyze(): void {
@@ -213,7 +215,7 @@ export default class InterpreterDLX {
             address:     `0x${addressPC}`,
             instruction: instructionString,
             text:        text,
-            code:        `0x${codeHex}`,
+            code:        `0x${codeHex}`
           };
           this.machineInstructions.set(`0x${addressPC}`, instruction);
           addressTagNum += 4;
@@ -253,8 +255,8 @@ export default class InterpreterDLX {
         { name: "label", alignment: "left", color: "magenta" },
         { name: "directive", alignment: "left", color: "green" },
         { name: "data", alignment: "left", color: "yellow" },
-        { name: "text", alignment: "left", color: "magenta" },
-      ],
+        { name: "text", alignment: "left", color: "magenta" }
+      ]
     });
     table_directives.addRows(mergeDirectives);
     table_directives.printTable();
@@ -282,8 +284,8 @@ export default class InterpreterDLX {
         { name: "text", alignment: "right", color: "magenta" },
         { name: "code", alignment: "left", color: "green" },
         { name: "instruction", alignment: "left", color: "yellow" },
-        { name: "label", alignment: "right", color: "magenta" },
-      ],
+        { name: "label", alignment: "right", color: "magenta" }
+      ]
     });
     table_tags.addRows(merge);
     table_tags.printTable();
@@ -307,8 +309,8 @@ export default class InterpreterDLX {
         { name: "halfword_0", alignment: "left", color: "green" },
         { name: "halfword_1", alignment: "left", color: "green" },
         { name: "word", alignment: "left", color: "green" },
-        { name: "binary32", alignment: "left", color: "magenta" },
-      ],
+        { name: "binary32", alignment: "left", color: "magenta" }
+      ]
     });
     table_Memory.addRows(memoryTable);
     table_Memory.printTable();
@@ -316,6 +318,46 @@ export default class InterpreterDLX {
 
   public getLabels(): TypeAddressLabel[] {
     return Array.from(this.addressLabel.values());
+  }
+
+  public getMachineDirectives(): TypeDirectiveData[] {
+    const mergeDirectives = new Map<TypeAddress, TypeDirectiveData>();
+    const directives = this.addressDirectiveLabelData.entries();
+    const DIRECTIVES = [...directives].sort(([address_a], [address_b]) => {
+      const num_a = parseInt(address_a, 16);
+      const num_b = parseInt(address_b, 16);
+      return num_a - num_b;
+    });
+    for (const [_address, _directive_value] of DIRECTIVES) {
+      if (this.addressDirectiveLabelData.has(_address)) {
+        // const { directive, data, address, text } = this.addressDirectiveLabelData.get(_address) as TypeAddressDirectiveLabelData;
+        const { directive, data, address, text } = _directive_value;
+        const hexValue = Utils.transform_directive_DataToHexValue(data);
+        mergeDirectives.set(_address, {
+          address:   address ?? "0x00000000",
+          hexValue:  hexValue ?? "0x00000000",
+          text:      text ?? "",
+          directive: directive
+        });
+      } else {
+        const _default: TypeDirectiveData = {
+          address:   "0x00000000",
+          hexValue:  "0x00000000",
+          text:      "",
+          directive: "DATA"
+        };
+        mergeDirectives.set(_address, _default);
+      }
+    }
+
+    return Array.from(mergeDirectives).map((item) => {
+      return {
+        address:   item[0],
+        hexValue:  item[1].hexValue,
+        directive: item[1].directive,
+        text:      item[1].text,
+      };
+    });
   }
 
   public getMachineInstructions(): TypeInstructionsData[] {
